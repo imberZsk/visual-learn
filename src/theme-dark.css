@@ -1,0 +1,272 @@
+/* ===================================================================
+ * 深色模式覆盖样式
+ * 通过 <html data-theme="dark"> 选择器，覆盖各页面自定义类中
+ * 硬编码的浅色背景 / 文本 / 边框，使其在深色模式下清晰可读。
+ * antd 组件本身由 ConfigProvider 的 darkAlgorithm 接管，这里只
+ * 处理自定义 CSS 类。
+ * =================================================================== */
+
+/* ---------- 全局：body / 根背景与文本 ---------- */
+[data-theme='dark'] body {
+  color: rgba(255, 255, 255, 0.85);
+  background-color: #141414;
+}
+
+/* 深色下滚动条配色 */
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: #1f1f1f;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #434343;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* 行内 code（index.css 中默认浅底）—— 限定非代码块内，避免给代码块文字叠底色 */
+[data-theme='dark'] :not(pre) > code {
+  background-color: #2a2a2a;
+  color: #d4d4d4;
+}
+
+/* ---------- 页面容器（Dashboard / DailyLog / Settings） ---------- */
+/* 这些容器原本写死浅色背景与深色文本，深色下改为透明继承 + 浅色文本 */
+[data-theme='dark'] .dashboard-container,
+[data-theme='dark'] .daily-log-container,
+[data-theme='dark'] .settings-container {
+  background-color: transparent;
+}
+
+[data-theme='dark'] .dashboard-title,
+[data-theme='dark'] .daily-log-container .page-title,
+[data-theme='dark'] .settings-container .page-title,
+[data-theme='dark'] .progress-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Dashboard 可点击学科卡片 hover 态 */
+[data-theme='dark'] .overview-category:hover {
+  background: #15233b;
+  border-color: #2a4a7a;
+}
+
+/* Dashboard 第一层级标题栏下边框 */
+[data-theme='dark'] .overview-group-header {
+  border-bottom-color: #303030 !important;
+}
+
+/* DailyLog 列表项 */
+[data-theme='dark'] .log-list-item {
+  background-color: transparent;
+  border-bottom-color: #303030;
+}
+
+[data-theme='dark'] .log-list-item:hover {
+  background-color: #1f1f1f;
+}
+
+[data-theme='dark'] .log-content {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ===================================================================
+ * 学习资料页（NotesLibrary）深色覆盖
+ * =================================================================== */
+
+/* 工具栏分隔线 */
+[data-theme='dark'] .notes-toolbar {
+  border-bottom-color: #303030;
+}
+
+/* 左侧导航面板背景 */
+[data-theme='dark'] .notes-nav-panel {
+  background: #1a1a1a;
+}
+
+/* 第一层级（归类）标题文本 */
+[data-theme='dark'] .nav-group-header {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme='dark'] .nav-group-header:hover,
+[data-theme='dark'] .nav-cat-header:hover,
+[data-theme='dark'] .nav-item:hover {
+  background: #262626;
+}
+
+/* 计数小字 */
+[data-theme='dark'] .nav-count {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* 选中的学习项 */
+[data-theme='dark'] .nav-item.active {
+  background: #15233b;
+}
+
+/* 右侧阅读区容器 */
+[data-theme='dark'] .notes-reader {
+  background: #1f1f1f;
+  border-color: #303030;
+}
+
+/* 文章标题栏（sticky，需与阅读区同底色避免穿透） */
+[data-theme='dark'] .article-head {
+  background: #1f1f1f;
+  border-bottom-color: #303030;
+}
+
+/* 右侧 TOC 目录栏 */
+[data-theme='dark'] .reader-toc {
+  background: #1a1a1a;
+  border-left-color: #303030;
+}
+
+[data-theme='dark'] .toc-head {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+[data-theme='dark'] .toc-item {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+[data-theme='dark'] .toc-item:hover {
+  background: #262626;
+  color: #40a9ff;
+}
+
+[data-theme='dark'] .toc-item.active {
+  color: #40a9ff;
+  background: #15233b;
+  border-left-color: #40a9ff;
+}
+
+/* ---------- Markdown 正文深色配色 ---------- */
+[data-theme='dark'] .markdown-body {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 一级 / 二级标题下边框 */
+[data-theme='dark'] .markdown-body h1,
+[data-theme='dark'] .markdown-body h2 {
+  border-bottom-color: #303030;
+}
+
+/* 行内代码（仅限非代码块内的 code，避免覆盖 pre 里的 hljs 高亮色） */
+[data-theme='dark'] .markdown-body :not(pre) > code {
+  background: rgba(110, 118, 129, 0.4);
+  color: #e6e6e6;
+}
+
+/* ---------- 优雅代码块深色配色 ---------- */
+/* 容器底色 #0d1117 明显深于阅读面板 #1f1f1f，使代码块从背景中“浮”出来 */
+[data-theme='dark'] .code-block {
+  background: #0d1117;
+  border-color: #30363d;
+}
+
+[data-theme='dark'] .code-block-header {
+  background: #161b22;
+  border-bottom-color: #30363d;
+}
+
+[data-theme='dark'] .code-block-lang {
+  color: #8b949e;
+}
+
+[data-theme='dark'] .code-block-copy {
+  color: #8b949e;
+}
+
+[data-theme='dark'] .code-block-copy:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #58a6ff;
+}
+
+[data-theme='dark'] .code-block-pre {
+  color: #c9d1d9;
+}
+
+/* 深色 hljs 配色（GitHub Dark 风格） */
+[data-theme='dark'] .markdown-body .hljs-keyword,
+[data-theme='dark'] .markdown-body .hljs-selector-tag,
+[data-theme='dark'] .markdown-body .hljs-built_in {
+  color: #ff7b72;
+}
+
+[data-theme='dark'] .markdown-body .hljs-string,
+[data-theme='dark'] .markdown-body .hljs-attr {
+  color: #a5d6ff;
+}
+
+[data-theme='dark'] .markdown-body .hljs-comment {
+  color: #8b949e;
+}
+
+[data-theme='dark'] .markdown-body .hljs-number,
+[data-theme='dark'] .markdown-body .hljs-literal {
+  color: #79c0ff;
+}
+
+[data-theme='dark'] .markdown-body .hljs-function,
+[data-theme='dark'] .markdown-body .hljs-title {
+  color: #d2a8ff;
+}
+
+[data-theme='dark'] .markdown-body .hljs-variable,
+[data-theme='dark'] .markdown-body .hljs-name,
+[data-theme='dark'] .markdown-body .hljs-params {
+  color: #c9d1d9;
+}
+
+[data-theme='dark'] .markdown-body .hljs-type,
+[data-theme='dark'] .markdown-body .hljs-class .hljs-title {
+  color: #ffa657;
+}
+
+/* 引用块 */
+[data-theme='dark'] .markdown-body blockquote {
+  border-left-color: #444c56;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 表格边框与表头 */
+[data-theme='dark'] .markdown-body th,
+[data-theme='dark'] .markdown-body td {
+  border-color: #303030;
+}
+
+[data-theme='dark'] .markdown-body th {
+  background: #262626;
+}
+
+/* 链接 */
+[data-theme='dark'] .markdown-body a {
+  color: #58a6ff;
+}
+
+
+
+/* ===================================================================
+ * 章节切换条（上一篇/下一篇）深色覆盖
+ * =================================================================== */
+[data-theme='dark'] .chapter-nav {
+  border-top-color: #303030;
+}
+
+[data-theme='dark'] .chapter-nav-btn {
+  background: #1f1f1f;
+  border-color: #303030;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme='dark'] .chapter-nav-btn:hover {
+  border-color: #40a9ff;
+  box-shadow: 0 2px 8px rgba(64, 169, 255, 0.18);
+}
+
+[data-theme='dark'] .chapter-nav-hint {
+  color: rgba(255, 255, 255, 0.45);
+}

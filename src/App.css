@@ -1,0 +1,68 @@
+/* App 全局样式 */
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* 卡片样式优化 */
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+/* 主内容区：工作台式紧凑留白，给内容更多可用空间 */
+.app-content {
+  margin: 12px;
+  padding: 12px;
+  min-height: calc(100vh - 72px);
+  overflow: hidden;
+}
+
+/* Ant Design 卡片默认留白偏大，这里统一收紧页面密度 */
+.app-content .ant-card-head {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.app-content .ant-card-head-title {
+  padding: 10px 0;
+}
+
+.app-content .ant-card-body {
+  padding: 14px;
+}
+
+.app-content .ant-menu-item {
+  height: 38px;
+  line-height: 38px;
+  margin-block: 2px;
+}
+
+/* 统计卡片标题字号（颜色交由 antd 主题算法控制） */
+.ant-statistic-title {
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.ant-statistic-content {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* 进度条样式 */
+.ant-progress-outer {
+  margin-right: 0;
+  padding-right: 0;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .ant-layout-sider {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 999;
+  }
+}

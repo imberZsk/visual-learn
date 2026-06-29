@@ -5,7 +5,7 @@
 mod commands;
 
 // 导入所有 Tauri 命令
-use commands::config::{get_study_path, set_study_path};
+use commands::config::{get_study_path, get_vscode_path, set_study_path, set_vscode_path};
 use commands::file_scanner::scan_study_notes;
 use commands::notes::{open_in_vscode, open_note_in_editor, read_md_content};
 use commands::preferences::{get_preference, set_preference};
@@ -39,6 +39,8 @@ fn main() {
             set_progress,
             get_study_path,
             set_study_path,
+            get_vscode_path,
+            set_vscode_path,
             get_preference,
             set_preference
         ])

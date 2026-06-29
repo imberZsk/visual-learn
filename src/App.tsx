@@ -4,7 +4,6 @@ import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
 import Dashboard from './pages/Dashboard'
 import NotesLibrary from './pages/NotesLibrary'
-import Settings from './pages/Settings'
 import './App.css'
 
 const { Content } = Layout
@@ -40,9 +39,6 @@ function App() {
 
               {/* 学习资料 */}
               <Route path="/notes" element={<NotesLibrary />} />
-
-              {/* 设置 */}
-              <Route path="/settings" element={<Settings />} />
 
               {/* 404 路由 */}
               <Route

@@ -501,16 +501,16 @@ const NotesLibrary: React.FC = () => {
     }
   }
 
-  // 用 VSCode 打开学习单元对应的 demo
-  const openDemoInVSCode = async (item: StudyItem, e: React.MouseEvent) => {
+  // 用 VSCode 打开学习单元对应的代码目录
+  const openItemCodeInVSCode = async (item: StudyItem, e: React.MouseEvent) => {
     e.stopPropagation()
     if (!item.demoPath) {
-      message.warning('该学习项没有对应的 demo')
+      message.warning('该学习项没有对应的代码目录')
       return
     }
     try {
       await invoke('open_in_vscode', { targetPath: item.demoPath })
-      message.success('已用 VSCode 打开对应 demo')
+      message.success('已用 VSCode 打开对应代码目录')
     } catch (error) {
       console.error('VSCode 打开失败:', error)
       message.error('VSCode 打开失败: ' + error)
@@ -520,12 +520,12 @@ const NotesLibrary: React.FC = () => {
   // 用 VSCode 打开整个学习项目
   const openProjectInVSCode = async () => {
     try {
-      // studyRoot 存储当前配置的学习目录，用于打开实际扫描的项目
-      const studyRoot = await invoke<string>('get_study_path')
+      // vscodeRoot 存储当前配置的 VSCode 打开根目录
+      const vscodeRoot = await invoke<string>('get_vscode_path')
       await invoke('open_in_vscode', {
-        targetPath: studyRoot,
+        targetPath: vscodeRoot,
       })
-      message.success('已用 VSCode 打开学习目录')
+      message.success('已用 VSCode 打开配置目录')
     } catch (error) {
       message.error('VSCode 打开失败: ' + error)
     }
@@ -611,13 +611,13 @@ const NotesLibrary: React.FC = () => {
                                     {item.name.replace(/\.md$/, '')}
                                   </span>
                                   {item.demoPath && (
-                                    <Tooltip title="新窗口打开对应 demo">
+                                    <Tooltip title="新窗口打开对应代码目录">
                                       <Button
                                         type="text"
                                         size="small"
                                         className="nav-item-demo"
                                         icon={<CodeOutlined />}
-                                        onClick={(e) => openDemoInVSCode(item, e)}
+                                        onClick={(e) => openItemCodeInVSCode(item, e)}
                                       />
                                     </Tooltip>
                                   )}
@@ -737,10 +737,10 @@ const NotesLibrary: React.FC = () => {
                           size="small"
                           icon={<CodeOutlined />}
                           onClick={(e) =>
-                            openDemoInVSCode(activeItem, e as React.MouseEvent)
+                            openItemCodeInVSCode(activeItem, e as React.MouseEvent)
                           }
                         >
-                          打开 demo
+                          打开代码
                         </Button>
                       )}
                       {immersive && (

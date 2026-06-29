@@ -1,18 +1,10 @@
 .settings-container {
   padding: 0;
-  background-color: #f0f2f5;
   min-height: 0;
-}
-
-.page-title {
-  color: #262626;
-  margin-bottom: 12px !important;
-  line-height: 1.2 !important;
 }
 
 .settings-card {
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 12px;
 }
 
@@ -25,10 +17,6 @@
 @media (max-width: 768px) {
   .settings-container {
     padding: 0;
-  }
-
-  .page-title {
-    font-size: 20px;
   }
 
   .settings-card {

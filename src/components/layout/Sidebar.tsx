@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   DashboardOutlined,
   FolderOutlined,
-  SettingOutlined,
 } from '@ant-design/icons'
 
 const { Sider } = Layout
@@ -20,7 +19,7 @@ const Sidebar: React.FC = () => {
     token: { colorBgContainer, colorSplit },
   } = theme.useToken()
 
-  // 菜单项配置
+  // 菜单项配置：设置入口已收敛到顶部栏图标，不再占用侧边栏导航
   const menuItems = [
     {
       key: '/dashboard',
@@ -31,11 +30,6 @@ const Sidebar: React.FC = () => {
       key: '/notes',
       icon: <FolderOutlined />,
       label: '学习资料',
-    },
-    {
-      key: '/settings',
-      icon: <SettingOutlined />,
-      label: '设置',
     },
   ]
 

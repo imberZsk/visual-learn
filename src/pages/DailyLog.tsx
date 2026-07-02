@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
+  App as AntdApp,
   Card,
   Form,
   Input,
@@ -10,7 +11,6 @@ import {
   List,
   Tag,
   Space,
-  message,
   Divider,
   Empty,
 } from 'antd';
@@ -68,6 +68,8 @@ interface LogFormValues {
  * 用于添加、查看和管理每日学习记录
  */
 const DailyLog: React.FC = () => {
+  // message 存储 antd App 上下文消息 API，确保提示跟随当前主题。
+  const { message } = AntdApp.useApp();
   // 表单实例
   const [form] = Form.useForm<LogFormValues>();
 

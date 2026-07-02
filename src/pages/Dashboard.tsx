@@ -9,7 +9,8 @@ import {
   FolderOutlined,
   CheckCircleFilled,
 } from '@ant-design/icons'
-import { invoke } from '@tauri-apps/api/tauri'
+import { appApi } from '../api'
+import LoadingState from '../components/LoadingState'
 import './Dashboard.css'
 
 const { Title, Text } = Typography
@@ -97,17 +98,17 @@ const Dashboard: React.FC = () => {
   }, [])
 
   /**
-   * 从 Tauri 后端加载学科分类与学习进度
-   * 先获取 studyRoot 路径，再传入 scan_study_notes
+   * 从 Electron 后端加载学科分类与学习进度
+   * 先获取 studyRoot 路径，再传入扫描接口
    */
   const loadData = async () => {
     try {
       setLoading(true)
-      const root = await invoke<string>('get_study_path')  // 学习笔记根目录路径
+      const root = await appApi.getStudyPath()  // 学习笔记根目录路径
       setStudyPath(root)
       const [cats, prog] = await Promise.all([
-        invoke<StudyCategory[]>('scan_study_notes', { studyRoot: root }),
-        invoke<Record<string, boolean>>('get_progress'),
+        appApi.scanStudyNotes(root) as Promise<StudyCategory[]>,
+        appApi.getProgress(),
       ])
       setCategories(cats)
       setProgress(prog)
@@ -159,114 +160,123 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard-page">
       <div className="compact-page-head">
-        <Title level={4} className="compact-page-title">📊 学习概览</Title>
+        <Title level={4} className="compact-page-title">
+          <Space size={6}>
+            <ReadOutlined />
+            <span>学习概览</span>
+          </Space>
+        </Title>
         <Text type="secondary" className="compact-page-subtitle">{studyPath}</Text>
       </div>
 
-      {/* 顶部统计卡片：4 个横向等宽 */}
-      <Row gutter={[12, 12]}>
-        <Col span={6}>
-          <Card className="stat-card">
-            <Statistic title="学科分类" value={stats.activeCategoryCount} prefix={<BookOutlined />} suffix="个" />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card className="stat-card">
-            <Statistic title="学习总篇数" value={stats.total} prefix={<FileTextOutlined />} suffix="篇" />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card className="stat-card">
-            <Statistic title="已完成" value={stats.completed} prefix={<CheckCircleOutlined />}
-              suffix={`/ ${stats.total}`} valueStyle={{ color: '#52c41a' }} />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card className="stat-card">
-            <Statistic title="完成率" value={stats.percent} prefix={<ReadOutlined />}
-              suffix="%" valueStyle={{ color: '#1890ff' }} />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 总体进度：大号圆形进度 + 文字说明，居中展示 */}
-      <Card className="compact-section-card" loading={loading}>
-        <div className="overall-progress-wrap">
-          <Progress
-            type="circle"
-            percent={stats.percent}
-            size={96}
-            strokeColor={getProgressColor(stats.percent)}
-          />
-          <div className="overall-progress-text">
-            <Text strong style={{ fontSize: 16 }}>总体学习进度</Text>
-            <Text type="secondary" style={{ fontSize: 14, marginTop: 4 }}>
-              已完成 <Text strong style={{ color: '#52c41a' }}>{stats.completed}</Text>
-              {' / 总计 '}
-              <Text strong>{stats.total}</Text>
-            </Text>
-          </div>
-        </div>
-      </Card>
-
-      {/* 各学科进度：每个 group 一张卡片，内部用网格展示圆形进度 */}
       {loading ? (
-        <Card className="compact-section-card" loading />
-      ) : groupedProgress.length === 0 ? (
-        <Card className="compact-section-card">
-          <Empty description="暂无学习数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-        </Card>
+        <LoadingState tip="加载学习概览..." />
       ) : (
-        groupedProgress.map((grp) => (
-          <Card
-            key={grp.group}
-            className="compact-section-card"
-            title={
-              <Space>
-                <FolderOutlined style={{ color: '#1890ff' }} />
-                <span>{grp.group}</span>
-                <Tag>{grp.categories.length} 个学科</Tag>
-                {grp.percent === 100 && <Tag color="success">已完成</Tag>}
-                <Text type="secondary" style={{ fontWeight: 400, fontSize: 13 }}>
-                  {grp.done} / {grp.total} · {grp.percent}%
+        <>
+          {/* 顶部统计卡片：4 个横向等宽 */}
+          <Row gutter={[12, 12]}>
+            <Col span={6}>
+              <Card className="stat-card">
+                <Statistic title="学科分类" value={stats.activeCategoryCount} prefix={<BookOutlined />} suffix="个" />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card className="stat-card">
+                <Statistic title="学习总篇数" value={stats.total} prefix={<FileTextOutlined />} suffix="篇" />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card className="stat-card">
+                <Statistic title="已完成" value={stats.completed} prefix={<CheckCircleOutlined />}
+                  suffix={`/ ${stats.total}`} valueStyle={{ color: '#52c41a' }} />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card className="stat-card">
+                <Statistic title="完成率" value={stats.percent} prefix={<ReadOutlined />}
+                  suffix="%" valueStyle={{ color: '#1890ff' }} />
+              </Card>
+            </Col>
+          </Row>
+
+          {/* 总体进度：大号圆形进度 + 文字说明，居中展示 */}
+          <Card className="compact-section-card">
+            <div className="overall-progress-wrap">
+              <Progress
+                type="circle"
+                percent={stats.percent}
+                size={96}
+                strokeColor={getProgressColor(stats.percent)}
+              />
+              <div className="overall-progress-text">
+                <Text strong style={{ fontSize: 16 }}>总体学习进度</Text>
+                <Text type="secondary" style={{ fontSize: 14, marginTop: 4 }}>
+                  已完成 <Text strong style={{ color: '#52c41a' }}>{stats.completed}</Text>
+                  {' / 总计 '}
+                  <Text strong>{stats.total}</Text>
                 </Text>
-              </Space>
-            }
-          >
-            <Row gutter={[12, 16]}>
-              {grp.categories.map((cat) => (
-                <Col span={6} key={cat.name}>
-                  {/* 学科圆形进度卡片，点击跳转 */}
-                  <div
-                    className={`subject-card${cat.percent === 100 ? ' subject-card--done' : ''}`}
-                    onClick={() => goToCategory(grp.group, cat.name)}
-                    title={`查看 ${cat.name} 的学习内容`}
-                  >
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
-                      <Progress
-                        type="circle"
-                        percent={cat.percent}
-                        size={64}
-                        strokeColor={getProgressColor(cat.percent)}
-                        showInfo={cat.percent !== 100}  // 100% 时隐藏数字，改用对号图标
-                      />
-                      {/* 100% 完成时在圆环中心叠加绿色对号 */}
-                      {cat.percent === 100 && (
-                        <CheckCircleFilled className="subject-done-icon" />
-                      )}
-                    </div>
-                    <Text className="subject-name" ellipsis title={cat.name}>
-                      {cat.name}
-                    </Text>
-                    <Text type="secondary" style={{ fontSize: 11 }}>
-                      {cat.done}/{cat.total}
-                    </Text>
-                  </div>
-                </Col>
-              ))}
-            </Row>
+              </div>
+            </div>
           </Card>
-        ))
+
+          {/* 各学科进度：每个 group 一张卡片，内部用网格展示圆形进度 */}
+          {groupedProgress.length === 0 ? (
+            <Card className="compact-section-card">
+              <Empty description="暂无学习数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            </Card>
+          ) : (
+            groupedProgress.map((grp) => (
+              <Card
+                key={grp.group}
+                className="compact-section-card"
+                title={
+                  <Space>
+                    <FolderOutlined style={{ color: '#1890ff' }} />
+                    <span>{grp.group}</span>
+                    <Tag>{grp.categories.length} 个学科</Tag>
+                    {grp.percent === 100 && <Tag color="success">已完成</Tag>}
+                    <Text type="secondary" style={{ fontWeight: 400, fontSize: 13 }}>
+                      {grp.done} / {grp.total} · {grp.percent}%
+                    </Text>
+                  </Space>
+                }
+              >
+                <Row gutter={[12, 16]}>
+                  {grp.categories.map((cat) => (
+                    <Col span={6} key={cat.name}>
+                      {/* 学科圆形进度卡片，点击跳转 */}
+                      <div
+                        className={`subject-card${cat.percent === 100 ? ' subject-card--done' : ''}`}
+                        onClick={() => goToCategory(grp.group, cat.name)}
+                        title={`查看 ${cat.name} 的学习内容`}
+                      >
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                          <Progress
+                            type="circle"
+                            percent={cat.percent}
+                            size={64}
+                            strokeColor={getProgressColor(cat.percent)}
+                            showInfo={cat.percent !== 100}  // 100% 时隐藏数字，改用对号图标
+                          />
+                          {/* 100% 完成时在圆环中心叠加绿色对号 */}
+                          {cat.percent === 100 && (
+                            <CheckCircleFilled className="subject-done-icon" />
+                          )}
+                        </div>
+                        <Text className="subject-name" ellipsis title={cat.name}>
+                          {cat.name}
+                        </Text>
+                        <Text type="secondary" style={{ fontSize: 11 }}>
+                          {cat.done}/{cat.total}
+                        </Text>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              </Card>
+            ))
+          )}
+        </>
       )}
     </div>
   )

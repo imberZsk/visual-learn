@@ -3421,6 +3421,7 @@ name = "visual-learn"
 version = "0.0.1"
 dependencies = [
  "chrono",
+ "objc",
  "serde",
  "serde_json",
  "serde_yaml",

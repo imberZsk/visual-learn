@@ -15,7 +15,7 @@
 .app-content {
   margin: 12px;
   padding: 12px;
-  min-height: calc(100vh - 72px);
+  min-height: calc(100vh - 96px);
   overflow: hidden;
 }
 
@@ -56,13 +56,22 @@
   padding-right: 0;
 }
 
-/* 响应式布局 */
-@media (max-width: 768px) {
-  .ant-layout-sider {
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    z-index: 999;
-  }
+/* 统一加载状态：参考 visual-worktree 的整屏居中 Spin，避免卡片 skeleton 与页面转圈混用 */
+.loading-state {
+  min-height: calc(100vh - 96px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 局部加载状态：用于阅读正文等固定区域，不撑满整页 */
+.loading-state--compact {
+  min-height: 220px;
+}
+
+/* 加载提示文案保持低噪音 */
+.loading-state-tip {
+  font-size: 13px;
 }

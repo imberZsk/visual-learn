@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+本文件为 AI 编码助手在本仓库工作时提供指导。
 
 > 交流、注释、文档统一使用中文。
 
@@ -65,3 +65,4 @@ npm run build            # tsc 类型检查 + vite 构建前端（无独立 lint
 - **README.md 已严重过时**，描述的「每日记录、学习路线图、热力图、趋势图、Zustand stores、自定义 hooks、知识树」等功能在当前代码中**并不存在**或未接入。以实际代码为准。
 - `data/daily/`、`data/roadmaps/`、`src/types/{daily-log,roadmap,statistics}.ts`、`src/components/charts/`（HeatmapCalendar、ProgressBar）等是**未接入主流程的早期脚手架**，`App.tsx` 并未引用它们。新增功能前先确认目标文件是否真正在用。
 - 仓库根目录有大量 `*.md` 说明文件（START_HERE、TROUBLESHOOTING、PROJECT_REPORT 等），多为一次性生成的过程文档，参考价值有限。
+- 容易阻塞的任务需要异步处理，需要增加loading，统一loading

@@ -77,7 +77,8 @@
         "title": "学习进度追踪器",
         "width": 1200,
         "minHeight": 600,
-        "minWidth": 800
+        "minWidth": 800,
+        "focus": true
       }
     ]
   }

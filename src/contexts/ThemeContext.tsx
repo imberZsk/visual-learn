@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { invoke } from '@tauri-apps/api/tauri'
+import { appApi } from '../api'
 
 // 主题模式类型：深色 / 浅色
 export type ThemeMode = 'dark' | 'light'
@@ -40,7 +40,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // 组件挂载后从后端统一持久化目录读取主题偏好
   useEffect(() => {
-    invoke<string | null>('get_preference', { key: STORAGE_KEY })
+    appApi.getPreference(STORAGE_KEY)
       .then((saved) => {
         // saved 存储后端返回的主题偏好值，只有合法主题才应用
         if (saved === 'light' || saved === 'dark') {
@@ -54,7 +54,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', mode)
     if (!preferenceLoaded) return
-    invoke('set_preference', { key: STORAGE_KEY, value: mode }).catch((error) => {
+    appApi.setPreference(STORAGE_KEY, mode).catch((error) => {
       console.error('保存主题偏好失败:', error)
     })
   }, [mode, preferenceLoaded])

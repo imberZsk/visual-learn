@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
+  App as AntdApp,
   Tag,
   Space,
   Input,
   Button,
   Checkbox,
   Empty,
-  Spin,
   Tooltip,
-  message,
 } from 'antd'
 import {
   SearchOutlined,
@@ -34,8 +33,9 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
-import { invoke } from '@tauri-apps/api/tauri'
+import { appApi } from '../api'
 import CodeBlock from '../components/CodeBlock'
+import LoadingState from '../components/LoadingState'
 import './NotesLibrary.css'
 
 const { Search } = Input
@@ -120,6 +120,8 @@ interface Heading {
  * 右侧：文章内容（更大阅读区，支持上/下一章切换、沉浸式阅读）+ TOC 目录
  */
 const NotesLibrary: React.FC = () => {
+  // message 存储 antd App 上下文消息 API，确保提示跟随当前主题。
+  const { message } = AntdApp.useApp()
   // 所有分类数据
   const [categories, setCategories] = useState<StudyCategory[]>([])
   // 加载状态
@@ -184,16 +186,13 @@ const NotesLibrary: React.FC = () => {
     setMdContent('')
     setHeadings([])
     // 缓存当前打开的学习项路径，便于下次进入页面时恢复
-    invoke('set_preference', { key: LAST_ITEM_KEY, value: item.path }).catch((error) => {
+    appApi.setPreference(LAST_ITEM_KEY, item.path).catch((error) => {
       console.error('保存上次打开学习项失败:', error)
     })
     try {
       // 先取配置的学习目录，后端安全校验需要此参数
-      const studyRoot = await invoke<string>('get_study_path')
-      const content = await invoke<string>('read_md_content', {
-        filePath: item.path,
-        studyRoot,
-      })
+      const studyRoot = await appApi.getStudyPath()
+      const content = await appApi.readMdContent(item.path, studyRoot)
       setMdContent(content)
     } catch (error) {
       console.error('读取 md 失败:', error)
@@ -207,11 +206,11 @@ const NotesLibrary: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true)
-      // 先取配置的学习目录，scan_study_notes 需要此参数
-      const studyRoot = await invoke<string>('get_study_path')
+      // 先取配置的学习目录，扫描学习资料需要此参数
+      const studyRoot = await appApi.getStudyPath()
       const [cats, prog] = await Promise.all([
-        invoke<StudyCategory[]>('scan_study_notes', { studyRoot }),
-        invoke<Record<string, boolean>>('get_progress'),
+        appApi.scanStudyNotes(studyRoot) as Promise<StudyCategory[]>,
+        appApi.getProgress(),
       ])
       setCategories(cats)
       setProgress(prog)
@@ -237,7 +236,7 @@ const NotesLibrary: React.FC = () => {
       // 情况2：恢复上次打开的缓存项（仅当缓存路径在本次扫描结果中仍存在）
       if (!target) {
         // cachedPath 存储后端偏好文件中记录的上次打开学习项路径
-        const cachedPath = await invoke<string | null>('get_preference', { key: LAST_ITEM_KEY })
+        const cachedPath = await appApi.getPreference(LAST_ITEM_KEY)
         if (cachedPath) {
           for (const c of cats) {
             const found = c.items.find((it) => it.path === cachedPath)
@@ -489,11 +488,7 @@ const NotesLibrary: React.FC = () => {
     e.stopPropagation?.()
     const completed = e.target.checked
     try {
-      await invoke('set_progress', {
-        filePath: item.path,
-        completed,
-        timestamp: Date.now(),
-      })
+      await appApi.setProgress(item.path, completed, Date.now())
       setProgress((prev) => ({ ...prev, [item.path]: completed }))
     } catch (error) {
       console.error('更新进度失败:', error)
@@ -509,7 +504,7 @@ const NotesLibrary: React.FC = () => {
       return
     }
     try {
-      await invoke('open_in_vscode', { targetPath: item.demoPath })
+      await appApi.openInVscode(item.demoPath)
       message.success('已用 VSCode 打开对应代码目录')
     } catch (error) {
       console.error('VSCode 打开失败:', error)
@@ -521,10 +516,8 @@ const NotesLibrary: React.FC = () => {
   const openProjectInVSCode = async () => {
     try {
       // vscodeRoot 存储当前配置的 VSCode 打开根目录
-      const vscodeRoot = await invoke<string>('get_vscode_path')
-      await invoke('open_in_vscode', {
-        targetPath: vscodeRoot,
-      })
+      const vscodeRoot = await appApi.getVscodePath()
+      await appApi.openInVscode(vscodeRoot)
       message.success('已用 VSCode 打开配置目录')
     } catch (error) {
       message.error('VSCode 打开失败: ' + error)
@@ -701,6 +694,9 @@ const NotesLibrary: React.FC = () => {
       )}
 
       {/* 主体：左导航树（可折叠/沉浸隐藏） + 右文章 */}
+      {loading ? (
+        <LoadingState tip="扫描学习资料..." />
+      ) : (
       <div className="notes-main">
         {/* 左侧三级折叠导航 */}
         {!listCollapsed && !immersive && renderNavTree()}
@@ -757,11 +753,9 @@ const NotesLibrary: React.FC = () => {
                     </Space>
                   </div>
 
-                  {/* 正文区：加载中显示 spinner，加载完显示 markdown */}
+                  {/* 正文区：加载中显示统一紧凑 loading，加载完显示 markdown */}
                   {mdLoading ? (
-                    <div style={{ textAlign: 'center', padding: 48 }}>
-                      <Spin tip="加载中..." />
-                    </div>
+                    <LoadingState compact tip="加载文章..." />
                   ) : (
                     <>
                       <div className="markdown-body" ref={markdownRef}>
@@ -804,6 +798,7 @@ const NotesLibrary: React.FC = () => {
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }

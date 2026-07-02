@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout, theme } from 'antd'
-import Sidebar from './components/layout/Sidebar'
 import Header from './components/layout/Header'
 import Dashboard from './pages/Dashboard'
 import NotesLibrary from './pages/NotesLibrary'
@@ -19,42 +18,37 @@ function App() {
   } = theme.useToken()
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Layout style={{ minHeight: '100vh' }}>
-        {/* 侧边栏 */}
-        <Sidebar />
+        {/* 头部 */}
+        <Header />
 
-        <Layout>
-          {/* 头部 */}
-          <Header />
+        {/* 主内容区 */}
+        <Content className="app-content" style={{ background: colorBgContainer }}>
+          <Routes>
+            {/* 根路径重定向到学习概览 */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-          {/* 主内容区 */}
-          <Content className="app-content" style={{ background: colorBgContainer }}>
-            <Routes>
-              {/* 根路径重定向到学习概览 */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            {/* 学习概览 */}
+            <Route path="/dashboard" element={<Dashboard />} />
 
-              {/* 学习概览 */}
-              <Route path="/dashboard" element={<Dashboard />} />
+            {/* 学习资料 */}
+            <Route path="/notes" element={<NotesLibrary />} />
 
-              {/* 学习资料 */}
-              <Route path="/notes" element={<NotesLibrary />} />
-
-              {/* 404 路由 */}
-              <Route
-                path="*"
-                element={
-                  <div style={{ textAlign: 'center', padding: '50px' }}>
-                    <h1>404</h1>
-                    <p>页面不存在</p>
-                  </div>
-                }
-              />
-            </Routes>
-          </Content>
-        </Layout>
+            {/* 404 路由 */}
+            <Route
+              path="*"
+              element={
+                <div style={{ textAlign: 'center', padding: '50px' }}>
+                  <h1>404</h1>
+                  <p>页面不存在</p>
+                </div>
+              }
+            />
+          </Routes>
+        </Content>
       </Layout>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 

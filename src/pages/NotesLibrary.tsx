@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   App as AntdApp,
@@ -8,7 +8,9 @@ import {
   Button,
   Checkbox,
   Empty,
+  Modal,
   Tooltip,
+  Tree,
 } from 'antd'
 import {
   SearchOutlined,
@@ -22,26 +24,71 @@ import {
   CaretRightOutlined,
   CaretDownOutlined,
   FolderOutlined,
-  FolderOpenOutlined,
   BookOutlined,
   LeftOutlined,
   RightOutlined,
   FullscreenOutlined,
   FullscreenExitOutlined,
+  HighlightOutlined,
+  CommentOutlined,
+  DeleteOutlined,
+  SaveOutlined,
+  FormOutlined,
 } from '@ant-design/icons'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
+import type { DataNode, TreeProps } from 'antd/es/tree'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import { appApi } from '../api'
 import CodeBlock from '../components/CodeBlock'
 import LoadingState from '../components/LoadingState'
+import {
+  applyAnnotationHighlights,
+  clearAnnotationHighlights,
+  createAnnotationDraft,
+  getAnnotatableText,
+  resolveAnnotationPosition,
+  type AnnotationDraft,
+  type ArticleAnnotation,
+} from '../utils/annotations'
 import './NotesLibrary.css'
 
-const { Search } = Input
+const { Search, TextArea } = Input
 
 // 后端偏好存储 key：记录上次打开的学习项路径，用于再次进入页面时恢复
 const LAST_ITEM_KEY = 'lastItemPath'
+
+/**
+ * 生成归类层级的 Tree key。
+ * @param group - 顶层归类名称。
+ * @returns antd Tree 使用的唯一 key。
+ */
+const makeGroupKey = (group: string): string => `group:${group}`
+
+/**
+ * 生成学科层级的 Tree key。
+ * @param group - 顶层归类名称。
+ * @param category - 学科分类名称。
+ * @returns antd Tree 使用的唯一 key。
+ */
+const makeCategoryKey = (group: string, category: string): string => `category:${group}:${category}`
+
+/**
+ * 生成学习项层级的 Tree key。
+ * @param path - 学习项文件绝对路径。
+ * @returns antd Tree 使用的唯一 key。
+ */
+const makeItemKey = (path: string): string => `item:${path}`
+
+/**
+ * 合并 Tree 展开 key，并去重保持展开状态稳定。
+ * @param previousKeys - 当前已经展开的 Tree key 列表。
+ * @param nextKeys - 本次需要追加展开的 Tree key 列表。
+ * @returns 合并去重后的 Tree key 列表。
+ */
+const mergeExpandedKeys = (previousKeys: React.Key[], nextKeys: React.Key[]): React.Key[] =>
+  Array.from(new Set([...previousKeys, ...nextKeys]))
 
 /**
  * 递归提取 React 节点中的纯文本（用于复制代码块原文）
@@ -84,6 +131,24 @@ const markdownComponents = {
 }
 
 /**
+ * 格式化文章总结更新时间。
+ * @param timestamp - 总结最后更新时间戳。
+ * @returns 适合显示在总结卡片里的短时间文本。
+ */
+const formatSummaryUpdatedAt = (timestamp: number): string => {
+  // date 存储由时间戳转换出的日期对象。
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) return ''
+
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+/**
  * 学习单元（小册中的一篇文档）
  */
 interface StudyItem {
@@ -114,6 +179,22 @@ interface Heading {
 }
 
 /**
+ * 左侧导航树节点数据。
+ */
+interface NavTreeNode extends DataNode {
+  item?: StudyItem // 学习项节点关联的业务数据，非叶子节点不需要。
+}
+
+/**
+ * 选中文本后的标注浮层状态。
+ */
+interface AnnotationToolbarState {
+  left: number // 浮层相对阅读滚动区左侧的距离。
+  top: number // 浮层相对阅读滚动区顶部的距离。
+  draft: AnnotationDraft // 当前选区生成的标注草稿。
+}
+
+/**
  * 学习资料页面
  * 顶部：精简工具栏（折叠目录 / 沉浸模式 / 刷新 / 打开项目）
  * 左侧：可折叠的三级导航树（默认全部展开）
@@ -140,14 +221,37 @@ const NotesLibrary: React.FC = () => {
   const [listCollapsed, setListCollapsed] = useState(false)
   // 是否进入沉浸式阅读模式（隐藏左导航/工具栏，文章铺满）
   const [immersive, setImmersive] = useState(false)
-  // 已展开的第一层级（group）集合
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
-  // 已展开的学科集合
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
+  // 已展开的 antd Tree 节点 key 列表
+  const [expandedTreeKeys, setExpandedTreeKeys] = useState<React.Key[]>([])
   // 文章标题列表（TOC）
   const [headings, setHeadings] = useState<Heading[]>([])
   // 当前高亮的标题 id
   const [activeHeadingId, setActiveHeadingId] = useState<string>('')
+  // 当前文章的标注列表
+  const [annotations, setAnnotations] = useState<ArticleAnnotation[]>([])
+  // 选中文本后显示的标注操作浮层
+  const [annotationToolbar, setAnnotationToolbar] = useState<AnnotationToolbarState | null>(null)
+  // 待添加评论的选区标注草稿
+  const [pendingAnnotationDraft, setPendingAnnotationDraft] = useState<AnnotationDraft | null>(null)
+  // 正在查看或编辑的已有标注
+  const [editingAnnotation, setEditingAnnotation] = useState<ArticleAnnotation | null>(null)
+  // 评论输入框内容
+  const [commentText, setCommentText] = useState('')
+  // 标注保存 / 更新 / 删除中的状态
+  const [annotationSaving, setAnnotationSaving] = useState(false)
+  // 所有文章总总结：文件路径 -> 总总结记录
+  const [articleSummaries, setArticleSummaries] = useState<Record<string, VisualLearnArticleSummary>>({})
+  // 当前文章的总总结
+  const [activeSummary, setActiveSummary] = useState<VisualLearnArticleSummary | null>(null)
+  // 总总结编辑弹窗是否打开
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false)
+  // 总总结输入框内容
+  const [summaryText, setSummaryText] = useState('')
+  // 总总结保存中的状态
+  const [summarySaving, setSummarySaving] = useState(false)
+
+  // annotationModalOpen 存储评论编辑弹窗是否打开。
+  const annotationModalOpen = Boolean(pendingAnnotationDraft || editingAnnotation)
 
   // 来自学习概览页的跳转参数（group + category）
   const location = useLocation()
@@ -185,6 +289,17 @@ const NotesLibrary: React.FC = () => {
     setMdLoading(true)
     setMdContent('')
     setHeadings([])
+    setAnnotations([])
+    setAnnotationToolbar(null)
+    setPendingAnnotationDraft(null)
+    setEditingAnnotation(null)
+    setCommentText('')
+    setActiveSummary(null)
+    setSummaryModalOpen(false)
+    setSummaryText('')
+    if (markdownRef.current) {
+      clearAnnotationHighlights(markdownRef.current)
+    }
     // 缓存当前打开的学习项路径，便于下次进入页面时恢复
     appApi.setPreference(LAST_ITEM_KEY, item.path).catch((error) => {
       console.error('保存上次打开学习项失败:', error)
@@ -192,8 +307,31 @@ const NotesLibrary: React.FC = () => {
     try {
       // 先取配置的学习目录，后端安全校验需要此参数
       const studyRoot = await appApi.getStudyPath()
-      const content = await appApi.readMdContent(item.path, studyRoot)
+      // annotationPromise 存储当前文章标注读取任务，失败时降级为空列表，避免影响正文阅读。
+      const annotationPromise = appApi.getAnnotations(item.path).catch((error) => {
+        console.error('读取文章标注失败:', error)
+        message.warning('文章标注读取失败，本次先显示正文')
+        return [] as ArticleAnnotation[]
+      })
+      // summaryPromise 存储当前文章总总结读取任务，失败时降级为空，避免影响正文阅读。
+      const summaryPromise = appApi.getArticleSummary(item.path).catch((error) => {
+        console.error('读取文章总结失败:', error)
+        message.warning('文章总结读取失败，本次先显示正文')
+        return null as VisualLearnArticleSummary | null
+      })
+      // contentPromise 存储当前文章 Markdown 正文读取任务。
+      const contentPromise = appApi.readMdContent(item.path, studyRoot)
+      // loadedArticle 存储正文内容、标注列表与文章总总结的并行读取结果。
+      const loadedArticle = await Promise.all([contentPromise, annotationPromise, summaryPromise])
+      // content 存储当前文章 Markdown 正文内容。
+      const content = loadedArticle[0]
+      // noteAnnotations 存储当前文章已有标注列表。
+      const noteAnnotations = loadedArticle[1]
+      // articleSummary 存储当前文章已有总总结。
+      const articleSummary = loadedArticle[2]
       setMdContent(content)
+      setAnnotations(noteAnnotations)
+      setActiveSummary(articleSummary)
     } catch (error) {
       console.error('读取 md 失败:', error)
       setMdContent(`> ⚠️ 无法读取文件内容：${error}`)
@@ -208,12 +346,27 @@ const NotesLibrary: React.FC = () => {
       setLoading(true)
       // 先取配置的学习目录，扫描学习资料需要此参数
       const studyRoot = await appApi.getStudyPath()
-      const [cats, prog] = await Promise.all([
+      // summariesPromise 存储所有文章总总结读取任务，失败时只隐藏总结标识。
+      const summariesPromise = appApi.getArticleSummaries().catch((error) => {
+        console.error('读取文章总结列表失败:', error)
+        message.warning('文章总结列表读取失败，本次先隐藏总结标识')
+        return {} as Record<string, VisualLearnArticleSummary>
+      })
+      // loadedData 存储分类、进度和总结索引的并行加载结果。
+      const loadedData = await Promise.all([
         appApi.scanStudyNotes(studyRoot) as Promise<StudyCategory[]>,
         appApi.getProgress(),
+        summariesPromise,
       ])
+      // cats 存储扫描得到的学习资料分类。
+      const cats = loadedData[0]
+      // prog 存储文件路径到完成状态的映射。
+      const prog = loadedData[1]
+      // summaries 存储文件路径到文章总总结的映射。
+      const summaries = loadedData[2]
       setCategories(cats)
       setProgress(prog)
+      setArticleSummaries(summaries)
 
       // 决定初始要打开的学习项，优先级：
       //   1. 概览页跳转指定的学科 -> 打开该学科第一篇
@@ -254,8 +407,12 @@ const NotesLibrary: React.FC = () => {
           c.items.some((it) => it.path === target!.path)
         )
         if (owningCat) {
-          setExpandedGroups((prev) => new Set(prev).add(owningCat.group || '其他'))
-          setExpandedCats((prev) => new Set(prev).add(owningCat.name))
+          setExpandedTreeKeys((prev) =>
+            mergeExpandedKeys(prev, [
+              makeGroupKey(owningCat.group || '其他'),
+              makeCategoryKey(owningCat.group || '其他', owningCat.name),
+            ])
+          )
         }
         await selectAndLoad(target)
       }
@@ -346,33 +503,14 @@ const NotesLibrary: React.FC = () => {
   // 搜索时自动展开所有含匹配项的层级和学科
   useEffect(() => {
     if (!searchText.trim()) return
-    const groups = new Set<string>()
-    const cats = new Set<string>()
+    // keys 存储搜索命中后需要展开的 group 与 category 节点。
+    const keys: React.Key[] = []
     for (const g of navTree) {
-      groups.add(g.group)
-      for (const c of g.categories) cats.add(c.name)
+      keys.push(makeGroupKey(g.group))
+      for (const c of g.categories) keys.push(makeCategoryKey(g.group, c.name))
     }
-    setExpandedGroups(groups)
-    setExpandedCats(cats)
+    setExpandedTreeKeys(keys)
   }, [searchText, navTree])
-
-  // 切换层级展开/收起
-  const toggleGroup = (group: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev)
-      next.has(group) ? next.delete(group) : next.add(group)
-      return next
-    })
-  }
-
-  // 切换学科展开/收起
-  const toggleCat = (name: string) => {
-    setExpandedCats((prev) => {
-      const next = new Set(prev)
-      next.has(name) ? next.delete(name) : next.add(name)
-      return next
-    })
-  }
 
   // 点击学习单元：加载并显示 md 内容（并把阅读区滚回顶部）
   const handleSelectItem = async (item: StudyItem) => {
@@ -389,8 +527,12 @@ const NotesLibrary: React.FC = () => {
       c.items.some((it) => it.path === item.path)
     )
     if (owningCat) {
-      setExpandedGroups((prev) => new Set(prev).add(owningCat.group || '其他'))
-      setExpandedCats((prev) => new Set(prev).add(owningCat.name))
+      setExpandedTreeKeys((prev) =>
+        mergeExpandedKeys(prev, [
+          makeGroupKey(owningCat.group || '其他'),
+          makeCategoryKey(owningCat.group || '其他', owningCat.name),
+        ])
+      )
     }
     handleSelectItem(item)
   }
@@ -433,7 +575,7 @@ const NotesLibrary: React.FC = () => {
     const timer = setTimeout(() => {
       const panel = navPanelRef.current
       if (!panel) return
-      const activeEl = panel.querySelector('.nav-item.active') as HTMLElement | null
+      const activeEl = panel.querySelector('.ant-tree-treenode-selected') as HTMLElement | null
       if (activeEl) {
         activeEl.scrollIntoView({ block: 'nearest' })
       }
@@ -483,6 +625,299 @@ const NotesLibrary: React.FC = () => {
     }
   }
 
+  /**
+   * 关闭标注评论编辑弹窗，并清空临时输入状态。
+   */
+  const closeAnnotationEditor = () => {
+    setPendingAnnotationDraft(null)
+    setEditingAnnotation(null)
+    setCommentText('')
+  }
+
+  /**
+   * 点击已有高亮时打开评论编辑弹窗。
+   * @param annotation - 被点击的标注记录。
+   */
+  const handleAnnotationClick = useCallback((annotation: ArticleAnnotation) => {
+    setAnnotationToolbar(null)
+    setPendingAnnotationDraft(null)
+    setEditingAnnotation(annotation)
+    setCommentText(annotation.comment)
+  }, [])
+
+  /**
+   * 将恢复后的新偏移轻量写回持久化文件，减少文章改动后的漂移。
+   * @param renderedAnnotations - 已成功渲染的标注列表。
+   * @param fullText - 包裹标注前读取到的正文纯文本。
+   */
+  const persistRecoveredAnnotationPositions = useCallback((renderedAnnotations: ArticleAnnotation[], fullText: string) => {
+    for (const annotation of renderedAnnotations) {
+      // position 存储当前文章中重新定位到的标注位置。
+      const position = resolveAnnotationPosition(fullText, annotation)
+      if (!position) continue
+      if (
+        position.startOffset === annotation.startOffset &&
+        position.endOffset === annotation.endOffset
+      ) {
+        continue
+      }
+
+      // updatedPayload 存储需要回写的新偏移和上下文。
+      const updatedPayload = {
+        filePath: annotation.filePath,
+        id: annotation.id,
+        startOffset: position.startOffset,
+        endOffset: position.endOffset,
+        prefix: fullText.slice(Math.max(0, position.startOffset - 80), position.startOffset),
+        suffix: fullText.slice(position.endOffset, position.endOffset + 80),
+        timestamp: Date.now(),
+      }
+
+      appApi.updateAnnotation(updatedPayload)
+        .then((updatedAnnotation) => {
+          setAnnotations((prev) =>
+            prev.map((item) => (item.id === updatedAnnotation.id ? updatedAnnotation : item))
+          )
+        })
+        .catch((error) => {
+          console.error('回写标注恢复位置失败:', error)
+        })
+    }
+  }, [])
+
+  /**
+   * 保存一个新标注草稿。
+   * @param draft - 选区生成的标注草稿。
+   * @param comment - 用户填写的评论内容。
+   */
+  const saveAnnotationDraft = async (draft: AnnotationDraft, comment: string) => {
+    try {
+      setAnnotationSaving(true)
+      // createdAnnotation 存储后端返回的新标注记录。
+      const createdAnnotation = await appApi.createAnnotation({
+        ...draft,
+        comment,
+        timestamp: Date.now(),
+      })
+      setAnnotations((prev) => [...prev, createdAnnotation])
+      setAnnotationToolbar(null)
+      closeAnnotationEditor()
+      window.getSelection()?.removeAllRanges()
+      message.success(comment.trim() ? '已添加评论标注' : '已添加高亮标注')
+    } catch (error) {
+      console.error('保存标注失败:', error)
+      message.error('标注保存失败')
+    } finally {
+      setAnnotationSaving(false)
+    }
+  }
+
+  /**
+   * 直接把当前选区保存为高亮标注。
+   */
+  const handleCreateHighlight = () => {
+    if (!annotationToolbar) return
+    saveAnnotationDraft(annotationToolbar.draft, '')
+  }
+
+  /**
+   * 打开当前选区的评论输入弹窗。
+   */
+  const handleOpenDraftComment = () => {
+    if (!annotationToolbar) return
+    setPendingAnnotationDraft(annotationToolbar.draft)
+    setEditingAnnotation(null)
+    setCommentText('')
+  }
+
+  /**
+   * 保存评论弹窗中的内容，新标注走创建，已有标注走更新。
+   */
+  const handleSaveAnnotationComment = async () => {
+    if (pendingAnnotationDraft) {
+      await saveAnnotationDraft(pendingAnnotationDraft, commentText)
+      return
+    }
+    if (!editingAnnotation) return
+
+    try {
+      setAnnotationSaving(true)
+      // updatedAnnotation 存储后端返回的更新后标注记录。
+      const updatedAnnotation = await appApi.updateAnnotation({
+        filePath: editingAnnotation.filePath,
+        id: editingAnnotation.id,
+        comment: commentText,
+        timestamp: Date.now(),
+      })
+      setAnnotations((prev) =>
+        prev.map((annotation) => (annotation.id === updatedAnnotation.id ? updatedAnnotation : annotation))
+      )
+      closeAnnotationEditor()
+      message.success('已更新标注评论')
+    } catch (error) {
+      console.error('更新标注失败:', error)
+      message.error('标注更新失败')
+    } finally {
+      setAnnotationSaving(false)
+    }
+  }
+
+  /**
+   * 删除当前正在编辑的已有标注。
+   */
+  const handleDeleteAnnotation = async () => {
+    if (!editingAnnotation) return
+
+    try {
+      setAnnotationSaving(true)
+      await appApi.deleteAnnotation(editingAnnotation.filePath, editingAnnotation.id)
+      setAnnotations((prev) => prev.filter((annotation) => annotation.id !== editingAnnotation.id))
+      closeAnnotationEditor()
+      message.success('已删除标注')
+    } catch (error) {
+      console.error('删除标注失败:', error)
+      message.error('标注删除失败')
+    } finally {
+      setAnnotationSaving(false)
+    }
+  }
+
+  /**
+   * 打开文章总总结编辑弹窗，并带入当前已有总结内容。
+   */
+  const handleOpenSummaryEditor = () => {
+    setSummaryText(activeSummary?.content || '')
+    setSummaryModalOpen(true)
+  }
+
+  /**
+   * 关闭文章总总结编辑弹窗，并清空临时输入状态。
+   */
+  const closeSummaryEditor = () => {
+    setSummaryModalOpen(false)
+    setSummaryText('')
+  }
+
+  /**
+   * 保存当前文章的总总结；输入为空时清空该文章总结。
+   */
+  const handleSaveArticleSummary = async () => {
+    if (!activeItem) return
+
+    // content 存储用户输入并去掉首尾空白后的总结正文。
+    const content = summaryText.trim()
+    try {
+      setSummarySaving(true)
+      // savedSummary 存储后端保存后的文章总总结；清空内容时为 null。
+      const savedSummary = await appApi.setArticleSummary(activeItem.path, content, Date.now())
+      setActiveSummary(savedSummary)
+      setArticleSummaries((prev) => {
+        // next 存储更新当前文章后的总结索引。
+        const next = { ...prev }
+        if (savedSummary) {
+          next[activeItem.path] = savedSummary
+        } else {
+          delete next[activeItem.path]
+        }
+        return next
+      })
+      closeSummaryEditor()
+      message.success(savedSummary ? '已保存文章总结' : '已清空文章总结')
+    } catch (error) {
+      console.error('保存文章总结失败:', error)
+      message.error('文章总结保存失败')
+    } finally {
+      setSummarySaving(false)
+    }
+  }
+
+  // 监听正文选区：用户选中文本后生成标注草稿，并在选区附近显示操作浮层
+  useEffect(() => {
+    // container 存储 Markdown 正文容器。
+    const container = markdownRef.current
+    // scrollEl 存储阅读滚动容器。
+    const scrollEl = scrollRef.current
+    if (!container || !scrollEl || !activeItem || mdLoading) return
+
+    /**
+     * 根据当前浏览器选区更新标注浮层状态。
+     */
+    const updateToolbarFromSelection = () => {
+      window.setTimeout(() => {
+        // selection 存储当前浏览器文本选区。
+        const selection = window.getSelection()
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+          setAnnotationToolbar(null)
+          return
+        }
+
+        // range 存储当前选区的 DOM Range。
+        const range = selection.getRangeAt(0)
+        if (!container.contains(range.commonAncestorContainer)) {
+          setAnnotationToolbar(null)
+          return
+        }
+
+        // draft 存储由当前选区生成的标注草稿。
+        const draft = createAnnotationDraft(container, range, activeItem.path, Date.now())
+        if (!draft) {
+          setAnnotationToolbar(null)
+          return
+        }
+
+        // rangeRect 存储选区在视口中的位置。
+        const rangeRect = range.getBoundingClientRect()
+        // scrollRect 存储阅读滚动容器在视口中的位置。
+        const scrollRect = scrollEl.getBoundingClientRect()
+        // rawLeft 存储浮层未经边界修正的左侧距离。
+        const rawLeft = rangeRect.left - scrollRect.left + scrollEl.scrollLeft
+        // maxLeft 存储浮层允许的最大左侧距离。
+        const maxLeft = Math.max(12, scrollEl.clientWidth - 180)
+        // left 存储浮层最终左侧距离。
+        const left = Math.min(Math.max(rawLeft, 12), maxLeft)
+        // rawTop 存储浮层未经边界修正的顶部距离。
+        const rawTop = rangeRect.top - scrollRect.top + scrollEl.scrollTop - 44
+        // top 存储浮层最终顶部距离。
+        const top = Math.max(scrollEl.scrollTop + 8, rawTop)
+
+        setAnnotationToolbar({ left, top, draft })
+      }, 0)
+    }
+
+    container.addEventListener('mouseup', updateToolbarFromSelection)
+    container.addEventListener('keyup', updateToolbarFromSelection)
+    return () => {
+      container.removeEventListener('mouseup', updateToolbarFromSelection)
+      container.removeEventListener('keyup', updateToolbarFromSelection)
+    }
+  }, [activeItem, mdContent, mdLoading])
+
+  // Markdown 渲染完成后，将当前文章标注包裹成正文高亮
+  useEffect(() => {
+    if (!mdContent || mdLoading) return
+
+    // timer 存储等待 Markdown DOM 完成渲染的定时器。
+    const timer = window.setTimeout(() => {
+      // container 存储 Markdown 正文容器。
+      const container = markdownRef.current
+      if (!container) return
+
+      // fullText 存储包裹高亮前的正文纯文本。
+      const fullText = getAnnotatableText(container)
+      // renderedAnnotations 存储本次成功渲染到 DOM 的标注列表。
+      const renderedAnnotations = applyAnnotationHighlights(container, annotations, handleAnnotationClick)
+      persistRecoveredAnnotationPositions(renderedAnnotations, fullText)
+    }, 80)
+
+    return () => window.clearTimeout(timer)
+  }, [
+    annotations,
+    handleAnnotationClick,
+    mdContent,
+    mdLoading,
+    persistRecoveredAnnotationPositions,
+  ])
+
   // 切换学习单元的完成状态
   const toggleProgress = async (item: StudyItem, e: CheckboxChangeEvent) => {
     e.stopPropagation?.()
@@ -524,6 +959,118 @@ const NotesLibrary: React.FC = () => {
     }
   }
 
+  // antd Tree 使用的数据源，负责承接原手写三级导航结构。
+  const navTreeData = useMemo<NavTreeNode[]>(() => {
+    return navTree.map((grp) => ({
+      key: makeGroupKey(grp.group),
+      className: 'nav-tree-node nav-tree-node--group',
+      title: (
+        <span className="nav-tree-title nav-tree-title--group">
+          <FolderOutlined className="nav-tree-heading-icon" />
+          <span className="nav-tree-name">{grp.group}</span>
+          <span className="nav-count">
+            {grp.done}/{grp.total}
+          </span>
+        </span>
+      ),
+      children: grp.categories.map((cat) => ({
+        key: makeCategoryKey(grp.group, cat.name),
+        className: 'nav-tree-node nav-tree-node--category',
+        title: (
+          <span className="nav-tree-title nav-tree-title--category">
+            <BookOutlined className="nav-tree-heading-icon nav-tree-heading-icon--category" />
+            <span className="nav-tree-name">{cat.name}</span>
+            <Tag
+              color={cat.percent === 100 ? 'success' : 'default'}
+              style={{ marginInlineEnd: 0, fontSize: 11 }}
+            >
+              {cat.done}/{cat.total}
+            </Tag>
+          </span>
+        ),
+        children: cat.items.map((item) => {
+          // isCompleted 存储该学习项是否已完成。
+          const isCompleted = !!progress[item.path]
+          // isSummarized 存储该学习项是否已经写过文章总总结。
+          const isSummarized = !!articleSummaries[item.path]?.content
+          // itemName 存储去掉 .md 后缀后的展示标题。
+          const itemName = item.name.replace(/\.md$/, '')
+
+          return {
+            key: makeItemKey(item.path),
+            className: 'nav-tree-node nav-tree-node--item',
+            isLeaf: true,
+            item,
+            title: (
+              <span className={`nav-tree-title nav-tree-title--item${item.demoPath ? ' nav-tree-title--with-demo' : ''}`}>
+                <Checkbox
+                  checked={isCompleted}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => toggleProgress(item, e)}
+                />
+                <span
+                  className="nav-item-name"
+                  style={{
+                    textDecoration: isCompleted ? 'line-through' : 'none',
+                    color: isCompleted ? '#999' : 'inherit',
+                  }}
+                  title={itemName}
+                >
+                  {itemName}
+                </span>
+                {isSummarized && (
+                  <Tooltip title="已写文章总结">
+                    <FormOutlined className="nav-item-summary-icon" />
+                  </Tooltip>
+                )}
+                {item.demoPath && (
+                  <Tooltip title="新窗口打开对应代码目录">
+                    <Button
+                      type="text"
+                      size="small"
+                      className="nav-item-demo"
+                      icon={<CodeOutlined />}
+                      onClick={(e) => openItemCodeInVSCode(item, e)}
+                    />
+                  </Tooltip>
+                )}
+              </span>
+            ),
+          }
+        }),
+      })),
+    }))
+  }, [articleSummaries, navTree, progress])
+
+  /**
+   * 处理 antd Tree 节点展开状态变化。
+   * @param keys - 当前已展开的 Tree 节点 key 列表。
+   */
+  const handleTreeExpand: TreeProps['onExpand'] = (keys) => {
+    setExpandedTreeKeys(keys)
+  }
+
+  /**
+   * 处理 antd Tree 节点选中，只有学习项叶子节点会触发文章加载。
+   * @param _selectedKeys - antd Tree 返回的选中 key 列表，本组件通过 info.node 取业务数据。
+   * @param info - antd Tree 当前选中节点的上下文信息。
+   */
+  const handleTreeSelect: TreeProps['onSelect'] = (_selectedKeys, info) => {
+    // node 存储当前点击的导航树节点。
+    const node = info.node as NavTreeNode
+    if (!node.item) {
+      // nodeKey 存储被点击目录节点的 Tree key，用于让目录标题也能切换展开态。
+      const nodeKey = node.key
+      setExpandedTreeKeys((previousKeys) =>
+        previousKeys.includes(nodeKey)
+          ? previousKeys.filter((key) => key !== nodeKey)
+          : [...previousKeys, nodeKey]
+      )
+      return
+    }
+    handleSelectItem(node.item)
+  }
+
   // 左侧三级导航树（沉浸模式下不渲染）
   const renderNavTree = () => (
     <div className="notes-nav-panel" ref={navPanelRef}>
@@ -543,89 +1090,18 @@ const NotesLibrary: React.FC = () => {
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
       ) : (
-        <div className="nav-tree">
-          {navTree.map((grp) => {
-            const groupExpanded = expandedGroups.has(grp.group)
-            return (
-              <div className="nav-group" key={grp.group}>
-                {/* 第一层级：归类（后端/AI编程...） */}
-                <div className="nav-group-header" onClick={() => toggleGroup(grp.group)}>
-                  {groupExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
-                  {groupExpanded ? <FolderOpenOutlined /> : <FolderOutlined />}
-                  <span className="nav-group-name">{grp.group}</span>
-                  <span className="nav-count">
-                    {grp.done}/{grp.total}
-                  </span>
-                </div>
-
-                {/* 第二层级：学科 */}
-                {groupExpanded &&
-                  grp.categories.map((cat) => {
-                    const catExpanded = expandedCats.has(cat.name)
-                    return (
-                      <div className="nav-cat" key={cat.name}>
-                        <div className="nav-cat-header" onClick={() => toggleCat(cat.name)}>
-                          {catExpanded ? <CaretDownOutlined /> : <CaretRightOutlined />}
-                          <BookOutlined style={{ color: '#1890ff', fontSize: 13 }} />
-                          <span className="nav-cat-name">{cat.name}</span>
-                          <Tag
-                            color={cat.percent === 100 ? 'success' : 'default'}
-                            style={{ marginInlineEnd: 0, fontSize: 11 }}
-                          >
-                            {cat.done}/{cat.total}
-                          </Tag>
-                        </div>
-
-                        {/* 第三层级：学习项 */}
-                        {catExpanded && (
-                          <div className="nav-items">
-                            {cat.items.map((item) => {
-                              const isCompleted = !!progress[item.path]
-                              const isActive = activeItem?.path === item.path
-                              return (
-                                <div
-                                  key={item.path}
-                                  className={`nav-item ${isActive ? 'active' : ''}`}
-                                  onClick={() => handleSelectItem(item)}
-                                >
-                                  <Checkbox
-                                    checked={isCompleted}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => toggleProgress(item, e)}
-                                  />
-                                  <span
-                                    className="nav-item-name"
-                                    style={{
-                                      textDecoration: isCompleted ? 'line-through' : 'none',
-                                      color: isCompleted ? '#999' : 'inherit',
-                                    }}
-                                    title={item.name.replace(/\.md$/, '')}
-                                  >
-                                    {item.name.replace(/\.md$/, '')}
-                                  </span>
-                                  {item.demoPath && (
-                                    <Tooltip title="新窗口打开对应代码目录">
-                                      <Button
-                                        type="text"
-                                        size="small"
-                                        className="nav-item-demo"
-                                        icon={<CodeOutlined />}
-                                        onClick={(e) => openItemCodeInVSCode(item, e)}
-                                      />
-                                    </Tooltip>
-                                  )}
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-              </div>
-            )
-          })}
-        </div>
+        <Tree
+          blockNode
+          className="notes-nav-tree"
+          expandedKeys={expandedTreeKeys}
+          selectedKeys={activeItem ? [makeItemKey(activeItem.path)] : []}
+          treeData={navTreeData}
+          switcherIcon={({ expanded, isLeaf }) =>
+            isLeaf ? null : expanded ? <CaretDownOutlined /> : <CaretRightOutlined />
+          }
+          onExpand={handleTreeExpand}
+          onSelect={handleTreeSelect}
+        />
       )}
     </div>
   )
@@ -637,24 +1113,24 @@ const NotesLibrary: React.FC = () => {
     return (
       <div className="chapter-nav">
         {prev ? (
-          <button className="chapter-nav-btn prev" onClick={() => goToChapter(prev)}>
+          <Button className="chapter-nav-btn prev" onClick={() => goToChapter(prev)}>
             <LeftOutlined />
             <span className="chapter-nav-label">
               <span className="chapter-nav-hint">上一篇</span>
               <span className="chapter-nav-title">{prev.name.replace(/\.md$/, '')}</span>
             </span>
-          </button>
+          </Button>
         ) : (
           <span className="chapter-nav-placeholder" />
         )}
         {next ? (
-          <button className="chapter-nav-btn next" onClick={() => goToChapter(next)}>
+          <Button className="chapter-nav-btn next" onClick={() => goToChapter(next)}>
             <span className="chapter-nav-label">
               <span className="chapter-nav-hint">下一篇</span>
               <span className="chapter-nav-title">{next.name.replace(/\.md$/, '')}</span>
             </span>
             <RightOutlined />
-          </button>
+          </Button>
         ) : (
           <span className="chapter-nav-placeholder" />
         )}
@@ -728,6 +1204,15 @@ const NotesLibrary: React.FC = () => {
                       )}
                     </Space>
                     <Space size={6}>
+                      <Tooltip title={activeSummary ? '查看或编辑文章总结' : '写一段费曼总结'}>
+                        <Button
+                          size="small"
+                          icon={<FormOutlined />}
+                          onClick={handleOpenSummaryEditor}
+                        >
+                          {activeSummary ? '编辑总结' : '写总结'}
+                        </Button>
+                      </Tooltip>
                       {activeItem.demoPath && (
                         <Button
                           size="small"
@@ -758,6 +1243,21 @@ const NotesLibrary: React.FC = () => {
                     <LoadingState compact tip="加载文章..." />
                   ) : (
                     <>
+                      {activeSummary && (
+                        <div className="article-summary-panel">
+                          <div className="article-summary-head">
+                            <Tag color="gold" className="article-summary-tag">
+                              费曼总结
+                            </Tag>
+                            <span className="article-summary-time">
+                              更新于 {formatSummaryUpdatedAt(activeSummary.updatedAt)}
+                            </span>
+                          </div>
+                          <div className="article-summary-content">
+                            {activeSummary.content}
+                          </div>
+                        </div>
+                      )}
                       <div className="markdown-body" ref={markdownRef}>
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
@@ -771,6 +1271,34 @@ const NotesLibrary: React.FC = () => {
                     </>
                   )}
                 </div>
+                {annotationToolbar && !mdLoading && (
+                  <div
+                    className="annotation-toolbar"
+                    style={{ left: annotationToolbar.left, top: annotationToolbar.top }}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    <Tooltip title="标记为重点">
+                      <Button
+                        size="small"
+                        icon={<HighlightOutlined />}
+                        loading={annotationSaving}
+                        onClick={handleCreateHighlight}
+                      >
+                        高亮
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="添加评论">
+                      <Button
+                        size="small"
+                        type="primary"
+                        icon={<CommentOutlined />}
+                        onClick={handleOpenDraftComment}
+                      >
+                        评论
+                      </Button>
+                    </Tooltip>
+                  </div>
+                )}
               </div>
 
               {/* TOC：始终占位 220px 避免宽度变化抖动，无标题时隐藏内容 */}
@@ -799,6 +1327,58 @@ const NotesLibrary: React.FC = () => {
         </div>
       </div>
       )}
+      <Modal
+        title={editingAnnotation ? '编辑标注评论' : '添加评论标注'}
+        open={annotationModalOpen}
+        okText="保存"
+        cancelText="取消"
+        okButtonProps={{ loading: annotationSaving, icon: <SaveOutlined /> }}
+        onCancel={closeAnnotationEditor}
+        onOk={handleSaveAnnotationComment}
+        destroyOnHidden
+      >
+        <div className="annotation-modal">
+          <div className="annotation-modal-quote">
+            {editingAnnotation?.quote || pendingAnnotationDraft?.quote}
+          </div>
+          <TextArea
+            autoSize={{ minRows: 4, maxRows: 8 }}
+            value={commentText}
+            placeholder="写下这段内容为什么重要..."
+            onChange={(e) => setCommentText(e.target.value)}
+          />
+          {editingAnnotation && (
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              loading={annotationSaving}
+              className="annotation-delete-btn"
+              onClick={handleDeleteAnnotation}
+            >
+              删除标注
+            </Button>
+          )}
+        </div>
+      </Modal>
+      <Modal
+        title={activeSummary ? '编辑文章总结' : '写文章总结'}
+        open={summaryModalOpen}
+        okText="保存总结"
+        cancelText="取消"
+        okButtonProps={{ loading: summarySaving, icon: <SaveOutlined /> }}
+        onCancel={closeSummaryEditor}
+        onOk={handleSaveArticleSummary}
+        destroyOnHidden
+      >
+        <div className="article-summary-editor">
+          <TextArea
+            autoSize={{ minRows: 6, maxRows: 12 }}
+            value={summaryText}
+            placeholder="用自己的话讲给别人听：这篇文章到底在说什么？"
+            onChange={(e) => setSummaryText(e.target.value)}
+          />
+        </div>
+      </Modal>
     </div>
   )
 }

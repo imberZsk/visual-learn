@@ -66,3 +66,8 @@ npm run build            # tsc 类型检查 + vite 构建前端（无独立 lint
 - `data/daily/`、`data/roadmaps/`、`src/types/{daily-log,roadmap,statistics}.ts`、`src/components/charts/`（HeatmapCalendar、ProgressBar）等是**未接入主流程的早期脚手架**，`App.tsx` 并未引用它们。新增功能前先确认目标文件是否真正在用。
 - 仓库根目录有大量 `*.md` 说明文件（START_HERE、TROUBLESHOOTING、PROJECT_REPORT 等），多为一次性生成的过程文档，参考价值有限。
 - 容易阻塞的任务需要异步处理，需要增加loading，统一loading
+
+
+## 开发
+
+开发的时候，强制考虑 antd 是否有合适的组件，优先使用 antd 组件实现

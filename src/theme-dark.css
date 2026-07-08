@@ -85,14 +85,16 @@
   background: #1a1a1a;
 }
 
-/* 第一层级（归类）标题文本 */
-[data-theme='dark'] .nav-group-header {
+/* antd Tree 归类标题文本 */
+[data-theme='dark'] .nav-tree-title--group {
   color: rgba(255, 255, 255, 0.85);
 }
 
-[data-theme='dark'] .nav-group-header:hover,
-[data-theme='dark'] .nav-cat-header:hover,
-[data-theme='dark'] .nav-item:hover {
+[data-theme='dark'] .notes-nav-tree {
+  background: transparent;
+}
+
+[data-theme='dark'] .notes-nav-tree .ant-tree-node-content-wrapper:hover {
   background: #262626;
 }
 
@@ -101,8 +103,8 @@
   color: rgba(255, 255, 255, 0.45);
 }
 
-/* 选中的学习项 */
-[data-theme='dark'] .nav-item.active {
+/* antd Tree 选中的学习项 */
+[data-theme='dark'] .notes-nav-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
   background: #15233b;
 }
 
@@ -116,6 +118,26 @@
 [data-theme='dark'] .article-head {
   background: #1f1f1f;
   border-bottom-color: #303030;
+}
+
+/* 文章总总结深色配色 */
+[data-theme='dark'] .article-summary-panel {
+  background: rgba(120, 88, 18, 0.18);
+  border-color: rgba(250, 173, 20, 0.36);
+  border-left-color: #d89614;
+  box-shadow: none;
+}
+
+[data-theme='dark'] .article-summary-time {
+  color: rgba(255, 214, 102, 0.72);
+}
+
+[data-theme='dark'] .article-summary-content {
+  color: rgba(255, 246, 214, 0.9);
+}
+
+[data-theme='dark'] .nav-item-summary-icon {
+  color: #ffc53d;
 }
 
 /* 右侧 TOC 目录栏 */
@@ -160,6 +182,37 @@
   color: #e6e6e6;
 }
 
+/* 文章标注深色配色 */
+[data-theme='dark'] .annotation-highlight {
+  background: rgba(161, 117, 31, 0.24);
+  border-bottom-color: rgba(255, 197, 61, 0.34);
+  box-shadow: none;
+}
+
+[data-theme='dark'] .annotation-highlight:hover {
+  background: rgba(181, 131, 36, 0.34);
+  border-bottom-color: rgba(255, 197, 61, 0.52);
+}
+
+[data-theme='dark'] .annotation-comment-dot {
+  border-left-color: rgba(255, 197, 61, 0.58);
+  background: transparent;
+  box-shadow: none;
+}
+
+[data-theme='dark'] .annotation-toolbar {
+  background: rgba(31, 31, 31, 0.97);
+  border-color: rgba(82, 82, 82, 0.86);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
+}
+
+[data-theme='dark'] .annotation-modal-quote {
+  background: #262626;
+  border-color: #3a3a3a;
+  border-left-color: rgba(255, 197, 61, 0.52);
+  color: rgba(255, 255, 255, 0.82);
+}
+
 /* ---------- 优雅代码块深色配色 ---------- */
 /* 容器底色 #0d1117 明显深于阅读面板 #1f1f1f，使代码块从背景中“浮”出来 */
 [data-theme='dark'] .code-block {
@@ -176,11 +229,11 @@
   color: #8b949e;
 }
 
-[data-theme='dark'] .code-block-copy {
+[data-theme='dark'] .code-block-copy.ant-btn {
   color: #8b949e;
 }
 
-[data-theme='dark'] .code-block-copy:hover {
+[data-theme='dark'] .code-block-copy.ant-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #58a6ff;
 }
@@ -256,13 +309,13 @@
   border-top-color: #303030;
 }
 
-[data-theme='dark'] .chapter-nav-btn {
+[data-theme='dark'] .chapter-nav-btn.ant-btn {
   background: #1f1f1f;
   border-color: #303030;
   color: rgba(255, 255, 255, 0.85);
 }
 
-[data-theme='dark'] .chapter-nav-btn:hover {
+[data-theme='dark'] .chapter-nav-btn.ant-btn:hover {
   border-color: #40a9ff;
   box-shadow: 0 2px 8px rgba(64, 169, 255, 0.18);
 }

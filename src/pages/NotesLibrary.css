@@ -37,7 +37,9 @@
 
 /* 左侧导航面板 */
 .notes-nav-panel {
-  width: 244px;
+  width: clamp(320px, 28vw, 420px);
+  min-width: 320px;
+  max-width: 420px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -47,31 +49,88 @@
   border-radius: 8px;
 }
 
-/* 导航树 */
-.nav-tree {
-  display: flex;
-  flex-direction: column;
+/* antd Tree：承接左侧三级目录导航 */
+.notes-nav-tree {
+  background: transparent;
 }
 
-/* 第一层级（归类）标题 */
-.nav-group-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 7px;
+.notes-nav-tree .ant-tree-treenode {
+  align-items: flex-start;
+  padding-bottom: 1px;
+}
+
+.notes-nav-tree .ant-tree-node-content-wrapper {
+  flex: 1;
+  min-width: 0;
   border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 13px;
-  color: #262626;
-  transition: background 0.15s;
+  padding-inline: 4px;
 }
 
-.nav-group-header:hover {
+.notes-nav-tree .ant-tree-switcher {
+  flex: 0 0 16px;
+  width: 16px;
+  min-width: 16px;
+}
+
+.notes-nav-tree .ant-tree-indent-unit {
+  width: 10px;
+}
+
+.notes-nav-tree .ant-tree-node-content-wrapper:hover {
   background: #eef2f7;
 }
 
-.nav-group-name {
+.notes-nav-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background: #e6f4ff;
+}
+
+.notes-nav-tree .ant-tree-title {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
+.nav-tree-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+.nav-tree-title--group {
+  font-weight: 600;
+  font-size: 13px;
+  color: #262626;
+}
+
+.nav-tree-title--category {
+  font-size: 13px;
+}
+
+.nav-tree-title--item {
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  padding-block: 2px;
+  line-height: 1.35;
+}
+
+.nav-tree-title--with-demo {
+  padding-right: 26px;
+}
+
+.nav-tree-heading-icon {
+  flex-shrink: 0;
+  color: inherit;
+  font-size: 13px;
+}
+
+.nav-tree-heading-icon--category {
+  color: #1890ff;
+}
+
+.nav-tree-name {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -85,70 +144,47 @@
   font-weight: normal;
 }
 
-/* 第二层级（学科）标题，缩进 */
-.nav-cat-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 7px 4px 18px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background 0.15s;
-}
-
-.nav-cat-header:hover {
-  background: #eef2f7;
-}
-
-.nav-cat-name {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 第三层级（学习项）容器 */
-.nav-items {
-  display: flex;
-  flex-direction: column;
-}
-
-/* 学习项 */
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 7px 3px 34px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.nav-item:hover {
-  background: #eef2f7;
-}
-
-.nav-item:hover .nav-item-demo {
+.notes-nav-tree .ant-tree-treenode:hover .nav-item-demo,
+.notes-nav-tree .ant-tree-node-content-wrapper.ant-tree-node-selected .nav-item-demo {
   opacity: 1;
-}
-
-.nav-item.active {
-  background: #e6f4ff;
 }
 
 .nav-item-name {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 13px;
+}
+
+.nav-item-summary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-top: 0;
+  color: #d48806;
   font-size: 13px;
 }
 
 /* demo 按钮：平时半隐，hover 行时显现 */
-.nav-item-demo {
-  opacity: 0.35;
+.nav-item-demo.ant-btn {
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  right: 0;
   flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  transform: translateY(-50%);
 }
 
 /* 右侧阅读区：文章 + TOC 横向排列 */
@@ -202,6 +238,50 @@
 .article-title {
   font-size: 15px;
   font-weight: 600;
+}
+
+/* 文章总总结：置顶高亮展示用户自己的费曼总结 */
+.article-summary-panel {
+  margin: 14px 0 14px;
+  padding: 13px 14px;
+  border: 1px solid #ffe58f;
+  border-left: 4px solid #faad14;
+  border-radius: 8px;
+  background: #fffbe6;
+  box-shadow: 0 1px 4px rgba(120, 72, 0, 0.06);
+}
+
+.article-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.article-summary-tag.ant-tag {
+  margin-inline-end: 0;
+  font-weight: 600;
+}
+
+.article-summary-time {
+  color: #8c6d1f;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.article-summary-content {
+  color: #3f2f00;
+  font-size: 14px;
+  line-height: 1.72;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.article-summary-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* 右侧 TOC 目录栏：始终占位 220px，防止有无标题时宽度抖动 */
@@ -354,21 +434,15 @@
 }
 
 /* 复制按钮 */
-.code-block-copy {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: none;
-  background: transparent;
+.code-block-copy.ant-btn {
   color: #57606a;
-  cursor: pointer;
   font-size: 12px;
-  padding: 2px 8px;
+  height: 22px;
+  padding: 0 8px;
   border-radius: 4px;
-  transition: all 0.15s;
 }
 
-.code-block-copy:hover {
+.code-block-copy.ant-btn:hover {
   background: rgba(0, 0, 0, 0.06);
   color: #1890ff;
 }
@@ -434,6 +508,86 @@
 
 .markdown-body img {
   max-width: 100%;
+}
+
+/* ===================================================================
+ * 文章标注：正文高亮 + 选区浮层 + 评论编辑
+ * =================================================================== */
+.annotation-highlight {
+  background: rgba(255, 249, 226, 0.78);
+  border-bottom: 1px solid rgba(202, 138, 4, 0.32);
+  box-shadow: none;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0 0.1em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.annotation-highlight:hover {
+  background: rgba(255, 242, 196, 0.9);
+  border-bottom-color: rgba(180, 120, 0, 0.5);
+}
+
+.annotation-highlight:focus {
+  outline: 2px solid rgba(202, 138, 4, 0.22);
+  outline-offset: 2px;
+}
+
+.annotation-comment-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 5px;
+  height: 12px;
+  margin-left: 2px;
+  border-left: 2px solid rgba(202, 138, 4, 0.52);
+  border-radius: 2px;
+  background: transparent;
+  vertical-align: -1px;
+}
+
+.annotation-toolbar {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid rgba(217, 217, 217, 0.72);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.annotation-toolbar .ant-btn {
+  height: 28px;
+  border-radius: 7px;
+}
+
+.annotation-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.annotation-modal-quote {
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border: 1px solid rgba(217, 217, 217, 0.85);
+  border-left: 3px solid rgba(202, 138, 4, 0.5);
+  border-radius: 6px;
+  background: #fafafa;
+  color: #3f3f3f;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.annotation-delete-btn.ant-btn {
+  align-self: flex-start;
 }
 
 /* 代码高亮（rehype-highlight 默认 class）—— 浅色主题基础配色（GitHub Light 风格） */
@@ -509,28 +663,29 @@
 }
 
 /* 单个切换按钮（上一篇靠左、下一篇靠右） */
-.chapter-nav-btn {
+.chapter-nav-btn.ant-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 1;
   max-width: 48%;
+  height: auto;
   padding: 10px 12px;
   border: 1px solid #e1e4e8;
   border-radius: 10px;
   background: #fff;
-  cursor: pointer;
   transition: all 0.18s;
   color: #24292f;
   text-align: left;
+  justify-content: flex-start;
 }
 
-.chapter-nav-btn:hover {
+.chapter-nav-btn.ant-btn:hover {
   border-color: #1890ff;
   box-shadow: 0 2px 8px rgba(24, 144, 255, 0.12);
 }
 
-.chapter-nav-btn.next {
+.chapter-nav-btn.next.ant-btn {
   justify-content: flex-end;
   text-align: right;
 }

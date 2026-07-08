@@ -10,6 +10,13 @@ const IPC = {
   READ_MD_CONTENT: 'visual-learn:read-md-content',
   GET_PROGRESS: 'visual-learn:get-progress',
   SET_PROGRESS: 'visual-learn:set-progress',
+  GET_ANNOTATIONS: 'visual-learn:get-annotations',
+  CREATE_ANNOTATION: 'visual-learn:create-annotation',
+  UPDATE_ANNOTATION: 'visual-learn:update-annotation',
+  DELETE_ANNOTATION: 'visual-learn:delete-annotation',
+  GET_ARTICLE_SUMMARIES: 'visual-learn:get-article-summaries',
+  GET_ARTICLE_SUMMARY: 'visual-learn:get-article-summary',
+  SET_ARTICLE_SUMMARY: 'visual-learn:set-article-summary',
   GET_PREFERENCE: 'visual-learn:get-preference',
   SET_PREFERENCE: 'visual-learn:set-preference',
   OPEN_IN_VSCODE: 'visual-learn:open-in-vscode',
@@ -62,6 +69,47 @@ contextBridge.exposeInMainWorld('visualLearn', {
    * @returns {Promise<boolean>} 保存结果。
    */
   setProgress: (payload) => ipcRenderer.invoke(IPC.SET_PROGRESS, payload),
+  /**
+   * 获取文章标注。
+   * @param {{filePath: string}} payload - 标注读取参数。
+   * @returns {Promise<object[]>} 文章标注列表。
+   */
+  getAnnotations: (payload) => ipcRenderer.invoke(IPC.GET_ANNOTATIONS, payload),
+  /**
+   * 创建文章标注。
+   * @param {object} payload - 标注创建参数。
+   * @returns {Promise<object>} 创建后的标注。
+   */
+  createAnnotation: (payload) => ipcRenderer.invoke(IPC.CREATE_ANNOTATION, payload),
+  /**
+   * 更新文章标注。
+   * @param {object} payload - 标注更新参数。
+   * @returns {Promise<object>} 更新后的标注。
+   */
+  updateAnnotation: (payload) => ipcRenderer.invoke(IPC.UPDATE_ANNOTATION, payload),
+  /**
+   * 删除文章标注。
+   * @param {{filePath: string, id: string}} payload - 标注删除参数。
+   * @returns {Promise<boolean>} 删除结果。
+   */
+  deleteAnnotation: (payload) => ipcRenderer.invoke(IPC.DELETE_ANNOTATION, payload),
+  /**
+   * 获取所有文章总总结。
+   * @returns {Promise<Record<string, object>>} 文件路径到总结记录的映射。
+   */
+  getArticleSummaries: () => ipcRenderer.invoke(IPC.GET_ARTICLE_SUMMARIES),
+  /**
+   * 获取单篇文章总总结。
+   * @param {{filePath: string}} payload - 总总结读取参数。
+   * @returns {Promise<object|null>} 文章总总结记录。
+   */
+  getArticleSummary: (payload) => ipcRenderer.invoke(IPC.GET_ARTICLE_SUMMARY, payload),
+  /**
+   * 设置单篇文章总总结。
+   * @param {{filePath: string, content: string, timestamp: number}} payload - 总总结保存参数。
+   * @returns {Promise<object|null>} 保存后的总总结，清空时返回 null。
+   */
+  setArticleSummary: (payload) => ipcRenderer.invoke(IPC.SET_ARTICLE_SUMMARY, payload),
   /**
    * 读取轻量偏好。
    * @param {string} key - 偏好键。

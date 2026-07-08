@@ -72,6 +72,41 @@ describe('registerIpcHandlers', () => {
       await ipcMain.invoke(IPC.SET_PROGRESS, { filePath: notePath, completed: true, timestamp: 1000 });
       expect(await ipcMain.invoke(IPC.GET_PROGRESS)).toEqual({ [notePath]: true });
 
+      // annotation 存储通过 IPC 创建的文章标注。
+      const annotation = await ipcMain.invoke(IPC.CREATE_ANNOTATION, {
+        filePath: notePath,
+        quote: '正文',
+        startOffset: 6,
+        endOffset: 8,
+        prefix: '快速开始\n',
+        suffix: '',
+        comment: '重点',
+        color: 'yellow',
+        timestamp: 1000,
+      });
+      expect(await ipcMain.invoke(IPC.GET_ANNOTATIONS, { filePath: notePath })).toEqual([annotation]);
+
+      // updatedAnnotation 存储通过 IPC 更新后的文章标注。
+      const updatedAnnotation = await ipcMain.invoke(IPC.UPDATE_ANNOTATION, {
+        filePath: notePath,
+        id: annotation.id,
+        comment: '已复习',
+        timestamp: 2000,
+      });
+      expect(updatedAnnotation.comment).toBe('已复习');
+
+      await ipcMain.invoke(IPC.DELETE_ANNOTATION, { filePath: notePath, id: annotation.id });
+      expect(await ipcMain.invoke(IPC.GET_ANNOTATIONS, { filePath: notePath })).toEqual([]);
+
+      // summary 存储通过 IPC 保存的文章总总结。
+      const summary = await ipcMain.invoke(IPC.SET_ARTICLE_SUMMARY, {
+        filePath: notePath,
+        content: '这篇文章说明快速开始的关键步骤。',
+        timestamp: 3000,
+      });
+      expect(await ipcMain.invoke(IPC.GET_ARTICLE_SUMMARY, { filePath: notePath })).toEqual(summary);
+      expect(await ipcMain.invoke(IPC.GET_ARTICLE_SUMMARIES)).toEqual({ [notePath]: summary });
+
       await ipcMain.invoke(IPC.SET_PREFERENCE, { key: 'lastItemPath', value: notePath });
       expect(await ipcMain.invoke(IPC.GET_PREFERENCE, { key: 'lastItemPath' })).toBe(notePath);
 

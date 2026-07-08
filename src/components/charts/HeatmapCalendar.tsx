@@ -1,4 +1,8 @@
 import React from 'react';
+import { Card, Space, Tooltip, Typography } from 'antd';
+
+/** antd Typography.Text 和 Title 的别名。 */
+const { Text, Title } = Typography;
 
 /**
  * 每日学习数据接口
@@ -29,17 +33,17 @@ const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
   months = 12
 }) => {
   /**
-   * 根据学习次数返回对应的颜色类名
+   * 根据学习次数返回对应的色块颜色
    * @param count - 学习次数 (0-4)
-   * @returns Tailwind CSS 类名
+   * @returns CSS 颜色值
    */
-  const getColorClass = (count: number): string => {
+  const getColor = (count: number): string => {
     // 根据不同的学习强度返回不同深度的蓝色
-    if (count === 0) return 'bg-gray-100';
-    if (count === 1) return 'bg-blue-200';
-    if (count === 2) return 'bg-blue-400';
-    if (count === 3) return 'bg-blue-600';
-    return 'bg-blue-800'; // count >= 4
+    if (count === 0) return '#f0f0f0';
+    if (count === 1) return '#bae0ff';
+    if (count === 2) return '#69b1ff';
+    if (count === 3) return '#1677ff';
+    return '#0958d9'; // count >= 4
   };
 
   /**
@@ -113,56 +117,61 @@ const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
     return weeks;
   };
 
+  // weeks 存储按周分组后的热力图数据。
   const weeks = groupByWeeks();
+  // legendLevels 存储图例从少到多的学习强度级别。
+  const legendLevels = [0, 1, 2, 3, 4];
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      {/* 标题 */}
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+    <Card>
+      <Title level={5} style={{ marginTop: 0 }}>
         学习热力图
-      </h3>
-
+      </Title>
       {/* 日历网格容器 */}
-      <div className="overflow-x-auto">
-        <div className="inline-block min-w-full">
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{ display: 'inline-block', minWidth: '100%' }}>
           {/* 星期标签行 */}
-          <div className="flex mb-2">
-            <div className="w-8"></div>
+          <div style={{ display: 'flex', marginBottom: 8 }}>
+            <div style={{ width: 32 }}></div>
             {weeks.map((_, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col ml-1">
+              <div key={weekIndex} style={{ display: 'flex', flexDirection: 'column', marginLeft: 4 }}>
                 {weekIndex % 4 === 0 && (
-                  <span className="text-xs text-gray-500 mb-1">
+                  <Text type="secondary" style={{ fontSize: 12, marginBottom: 4 }}>
                     {/* 显示每月第一周的月份标签 */}
                     {new Date(calendarData[weekIndex * 7]?.date || '').toLocaleDateString('zh-CN', { month: 'short' })}
-                  </span>
+                  </Text>
                 )}
               </div>
             ))}
           </div>
 
           {/* 日历网格 */}
-          <div className="flex">
+          <div style={{ display: 'flex' }}>
             {/* 左侧星期标签 */}
-            <div className="flex flex-col mr-2">
+            <div style={{ display: 'flex', flexDirection: 'column', marginRight: 8 }}>
               {weekLabels.map(label => (
-                <div key={label} className="h-3 text-xs text-gray-500 flex items-center mb-1">
+                <Text key={label} type="secondary" style={{ height: 12, fontSize: 12, lineHeight: '12px', marginBottom: 4 }}>
                   {label}
-                </div>
+                </Text>
               ))}
             </div>
 
             {/* 日期色块网格 */}
-            <div className="flex space-x-1">
+            <div style={{ display: 'flex', gap: 4 }}>
               {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col space-y-1">
+                <div key={weekIndex} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {week.map((day, dayIndex) => (
-                    <div
-                      key={dayIndex}
-                      className={`w-3 h-3 rounded-sm ${
-                        day.count === -1 ? 'bg-transparent' : getColorClass(day.count)
-                      }`}
-                      title={day.date ? `${day.date}: ${day.count} 次学习` : ''}
-                    ></div>
+                    <Tooltip key={dayIndex} title={day.date ? `${day.date}: ${day.count} 次学习` : ''}>
+                      <span
+                        style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 2,
+                          display: 'inline-block',
+                          background: day.count === -1 ? 'transparent' : getColor(day.count),
+                        }}
+                      />
+                    </Tooltip>
                   ))}
                 </div>
               ))}
@@ -170,18 +179,25 @@ const HeatmapCalendar: React.FC<HeatmapCalendarProps> = ({
           </div>
 
           {/* 图例 */}
-          <div className="flex items-center justify-end mt-4 space-x-2">
-            <span className="text-xs text-gray-500">少</span>
-            <div className="w-3 h-3 bg-gray-100 rounded-sm"></div>
-            <div className="w-3 h-3 bg-blue-200 rounded-sm"></div>
-            <div className="w-3 h-3 bg-blue-400 rounded-sm"></div>
-            <div className="w-3 h-3 bg-blue-600 rounded-sm"></div>
-            <div className="w-3 h-3 bg-blue-800 rounded-sm"></div>
-            <span className="text-xs text-gray-500">多</span>
-          </div>
+          <Space size={8} style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>少</Text>
+            {legendLevels.map((level) => (
+              <span
+                key={level}
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 2,
+                  display: 'inline-block',
+                  background: getColor(level),
+                }}
+              />
+            ))}
+            <Text type="secondary" style={{ fontSize: 12 }}>多</Text>
+          </Space>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
 

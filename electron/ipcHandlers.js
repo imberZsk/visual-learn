@@ -3,6 +3,8 @@ import { getStudyPath, getVscodePath, setStudyPath, setVscodePath } from '../src
 import { scanStudyNotes } from '../src/core/studyScanner.js';
 import { readMarkdownContent } from '../src/core/notes.js';
 import { getProgress, setProgress } from '../src/core/progress.js';
+import { getAnnotations, createAnnotation, updateAnnotation, deleteAnnotation } from '../src/core/annotations.js';
+import { getArticleSummaries, getArticleSummary, setArticleSummary } from '../src/core/articleSummaries.js';
 import { getPreference, setPreference } from '../src/core/preferences.js';
 import { openInVscode as defaultOpenInVscode } from '../src/core/vscode.js';
 
@@ -20,6 +22,48 @@ function requireString(payload, key) {
   }
 
   return value;
+}
+
+/**
+ * 从 payload 中读取可选字符串字段。
+ * @param {object} payload - IPC payload。
+ * @param {string} key - 字段名。
+ * @returns {string|undefined} 字段不存在时返回 undefined。
+ */
+function readOptionalString(payload, key) {
+  // value 存储 payload 中指定字段的原始值。
+  const value = payload?.[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+/**
+ * 从 payload 中读取数字字段。
+ * @param {object} payload - IPC payload。
+ * @param {string} key - 字段名。
+ * @returns {number} 有限数字字段值。
+ */
+function requireNumber(payload, key) {
+  // value 存储 payload 中指定字段转换后的数字。
+  const value = Number(payload?.[key]);
+  if (!Number.isFinite(value)) {
+    throw new Error(`缺少参数: ${key}`);
+  }
+
+  return value;
+}
+
+/**
+ * 从 payload 中读取可选数字字段。
+ * @param {object} payload - IPC payload。
+ * @param {string} key - 字段名。
+ * @returns {number|undefined} 字段不存在或非有限数字时返回 undefined。
+ */
+function readOptionalNumber(payload, key) {
+  if (payload?.[key] === undefined) return undefined;
+
+  // value 存储 payload 中指定字段转换后的数字。
+  const value = Number(payload[key]);
+  return Number.isFinite(value) ? value : undefined;
 }
 
 /**
@@ -87,6 +131,50 @@ export function registerIpcHandlers(ipcMain, deps = {}) {
     }, coreOptions);
     return true;
   });
+
+  ipcMain.handle(IPC.GET_ANNOTATIONS, async (_event, payload = {}) => getAnnotations(requireString(payload, 'filePath'), coreOptions));
+
+  ipcMain.handle(IPC.CREATE_ANNOTATION, async (_event, payload = {}) => createAnnotation({
+    filePath: requireString(payload, 'filePath'),
+    quote: requireString(payload, 'quote'),
+    startOffset: requireNumber(payload, 'startOffset'),
+    endOffset: requireNumber(payload, 'endOffset'),
+    prefix: readOptionalString(payload, 'prefix') || '',
+    suffix: readOptionalString(payload, 'suffix') || '',
+    comment: readOptionalString(payload, 'comment') || '',
+    color: readOptionalString(payload, 'color') || 'yellow',
+    timestamp: readOptionalNumber(payload, 'timestamp') || Date.now(),
+  }, coreOptions));
+
+  ipcMain.handle(IPC.UPDATE_ANNOTATION, async (_event, payload = {}) => updateAnnotation({
+    filePath: requireString(payload, 'filePath'),
+    id: requireString(payload, 'id'),
+    comment: readOptionalString(payload, 'comment'),
+    color: readOptionalString(payload, 'color'),
+    startOffset: readOptionalNumber(payload, 'startOffset'),
+    endOffset: readOptionalNumber(payload, 'endOffset'),
+    prefix: readOptionalString(payload, 'prefix'),
+    suffix: readOptionalString(payload, 'suffix'),
+    timestamp: readOptionalNumber(payload, 'timestamp') || Date.now(),
+  }, coreOptions));
+
+  ipcMain.handle(IPC.DELETE_ANNOTATION, async (_event, payload = {}) => {
+    await deleteAnnotation({
+      filePath: requireString(payload, 'filePath'),
+      id: requireString(payload, 'id'),
+    }, coreOptions);
+    return true;
+  });
+
+  ipcMain.handle(IPC.GET_ARTICLE_SUMMARIES, async () => getArticleSummaries(coreOptions));
+
+  ipcMain.handle(IPC.GET_ARTICLE_SUMMARY, async (_event, payload = {}) => getArticleSummary(requireString(payload, 'filePath'), coreOptions));
+
+  ipcMain.handle(IPC.SET_ARTICLE_SUMMARY, async (_event, payload = {}) => setArticleSummary({
+    filePath: requireString(payload, 'filePath'),
+    content: readOptionalString(payload, 'content') || '',
+    timestamp: readOptionalNumber(payload, 'timestamp') || Date.now(),
+  }, coreOptions));
 
   ipcMain.handle(IPC.GET_PREFERENCE, async (_event, payload = {}) => getPreference(requireString(payload, 'key'), coreOptions));
 

@@ -69,19 +69,19 @@
 }
 
 /* 学科圆形进度卡片：居中排列，可点击，hover 上浮 */
-.subject-card {
+.subject-card.ant-btn {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 6px;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+  min-height: 110px;
+  padding: 0;
   border-radius: 8px;
-  cursor: pointer;
   border: 1px solid transparent;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.subject-card:hover {
+.subject-card.ant-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
   /* 用半透明色：深色/浅色主题下都自然融合 */
@@ -90,15 +90,25 @@
 }
 
 /* 100% 完成的学科卡片：绿色边框高亮 */
-.subject-card--done {
+.subject-card--done.ant-btn {
   border-color: rgba(82, 196, 26, 0.35);
   background: rgba(82, 196, 26, 0.06);
 }
 
-.subject-card--done:hover {
+.subject-card--done.ant-btn:hover {
   border-color: rgba(82, 196, 26, 0.5);
   background: rgba(82, 196, 26, 0.1);
   box-shadow: 0 6px 20px rgba(82, 196, 26, 0.15);
+}
+
+/* antd Button 内部内容：竖排承载圆形进度、学科名和篇数。 */
+.subject-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 6px;
 }
 
 /* 学科名称文字：固定最大宽度，超出省略；不设色让主题自动继承 */

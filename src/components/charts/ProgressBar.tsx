@@ -1,4 +1,8 @@
 import React from 'react';
+import { Progress, Space, Tag, Typography } from 'antd';
+
+/** antd Typography.Text 的别名。 */
+const { Text } = Typography;
 
 /**
  * 进度条组件的属性接口
@@ -10,7 +14,7 @@ interface ProgressBarProps {
   target: number;
   // 进度条标签
   label?: string;
-  // 显示颜色 (Tailwind 颜色类)
+  // 显示颜色，兼容旧 Tailwind 类名或直接传入 CSS 色值
   color?: string;
   // 是否显示百分比
   showPercentage?: boolean;
@@ -47,71 +51,81 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
   const percentage = calculatePercentage();
 
   /**
-   * 根据完成度返回状态文本和颜色
+   * 根据完成度返回状态文本和 antd Tag 色值
    * @returns 状态对象
    */
   const getStatus = (): { text: string; color: string } => {
     if (percentage >= 100) {
-      return { text: '已完成', color: 'text-green-600' };
+      return { text: '已完成', color: 'success' };
     } else if (percentage >= 75) {
-      return { text: '接近完成', color: 'text-blue-600' };
+      return { text: '接近完成', color: 'processing' };
     } else if (percentage >= 50) {
-      return { text: '进行中', color: 'text-yellow-600' };
+      return { text: '进行中', color: 'warning' };
     } else {
-      return { text: '刚开始', color: 'text-gray-600' };
+      return { text: '刚开始', color: 'default' };
     }
   };
 
+  /**
+   * 将旧 Tailwind 颜色类映射为 antd Progress 可用色值。
+   * @param value - 调用方传入的颜色配置。
+   * @returns antd Progress 的 strokeColor。
+   */
+  const resolveStrokeColor = (value: string): string => {
+    // colorMap 存储旧 Tailwind 类名到实际 CSS 颜色的兼容映射。
+    const colorMap: Record<string, string> = {
+      'bg-blue-500': '#1890ff',
+      'bg-green-500': '#52c41a',
+      'bg-yellow-500': '#faad14',
+      'bg-red-500': '#ff4d4f',
+      'bg-purple-500': '#722ed1',
+    };
+
+    return colorMap[value] || value;
+  };
+
+  // status 存储当前完成度对应的状态文案和 Tag 色值。
   const status = getStatus();
+  // strokeColor 存储 antd Progress 使用的进度条颜色。
+  const strokeColor = resolveStrokeColor(color);
 
   return (
-    <div className="w-full">
+    <div className="progress-bar">
       {/* 顶部信息行 */}
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center space-x-2">
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+        <Space size={8} wrap>
           {/* 进度条标签 */}
           {label && (
-            <span className="text-sm font-medium text-gray-700">{label}</span>
+            <Text strong>{label}</Text>
           )}
           {/* 状态标签 */}
-          <span className={`text-xs ${status.color}`}>
-            {status.text}
-          </span>
-        </div>
+          <Tag color={status.color}>{status.text}</Tag>
+        </Space>
 
         {/* 数值显示 */}
-        <div className="flex items-center space-x-3">
+        <Space size={12}>
           {showValues && (
-            <span className="text-sm text-gray-600">
+            <Text type="secondary">
               {current} / {target}
-            </span>
+            </Text>
           )}
           {showPercentage && (
-            <span className="text-sm font-semibold text-gray-800">
+            <Text strong>
               {percentage}%
-            </span>
+            </Text>
           )}
-        </div>
+        </Space>
       </div>
 
-      {/* 进度条容器 */}
-      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-        {/* 进度条填充 */}
-        <div
-          className={`h-full ${color} rounded-full transition-all duration-500 ease-out relative`}
-          style={{ width: `${percentage}%` }}
-        >
-          {/* 进度条光泽效果 */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30"></div>
-        </div>
-      </div>
+      {/* antd 进度条 */}
+      <Progress percent={percentage} showInfo={false} strokeColor={strokeColor} />
 
       {/* 里程碑标记 (可选) */}
       {target > 0 && (
-        <div className="flex justify-between mt-1 px-1">
-          <span className="text-xs text-gray-400">0</span>
-          <span className="text-xs text-gray-400">{target / 2}</span>
-          <span className="text-xs text-gray-400">{target}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, paddingInline: 4 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>0</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>{target / 2}</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>{target}</Text>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { message } from 'antd'
+import { App as AntdApp, Button } from 'antd'
 import { CopyOutlined, CheckOutlined } from '@ant-design/icons'
 
 // 组件入参：语言标识 + 原始代码文本 + 已高亮的子节点
@@ -14,6 +14,8 @@ interface CodeBlockProps {
  * 顶部栏显示语言标签 + 一键复制按钮，下方为高亮代码区
  */
 const CodeBlock: React.FC<CodeBlockProps> = ({ language, rawCode, children }) => {
+  // message 存储 antd App 上下文消息 API，确保提示跟随当前主题。
+  const { message } = AntdApp.useApp()
   // 是否处于"已复制"短暂反馈状态
   const [copied, setCopied] = useState(false)
 
@@ -35,10 +37,15 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, rawCode, children }) =>
       {/* 顶部栏：语言标签 + 复制按钮 */}
       <div className="code-block-header">
         <span className="code-block-lang">{language || 'code'}</span>
-        <button className="code-block-copy" onClick={handleCopy} type="button">
-          {copied ? <CheckOutlined /> : <CopyOutlined />}
-          <span>{copied ? '已复制' : '复制'}</span>
-        </button>
+        <Button
+          type="text"
+          size="small"
+          className="code-block-copy"
+          icon={copied ? <CheckOutlined /> : <CopyOutlined />}
+          onClick={handleCopy}
+        >
+          {copied ? '已复制' : '复制'}
+        </Button>
       </div>
 
       {/* 代码内容区（保留 rehype-highlight 的高亮节点） */}

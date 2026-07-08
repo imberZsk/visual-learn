@@ -6,6 +6,8 @@ import { getStorageFilePath } from '../../src/core/storage.js';
 import { loadConfig, setStudyPath, setVscodePath } from '../../src/core/config.js';
 import { getPreference, setPreference } from '../../src/core/preferences.js';
 import { getProgress, setProgress } from '../../src/core/progress.js';
+import { getAnnotations, createAnnotation, updateAnnotation, deleteAnnotation } from '../../src/core/annotations.js';
+import { getArticleSummaries, getArticleSummary, setArticleSummary } from '../../src/core/articleSummaries.js';
 
 describe('storage/config/preferences/progress', () => {
   /**
@@ -104,6 +106,107 @@ describe('storage/config/preferences/progress', () => {
     } finally {
       await removeTempDir(dataDir);
       await removeTempDir(legacyDir);
+    }
+  });
+
+  /**
+   * 验证文章标注能独立持久化，并支持创建、读取、更新和删除。
+   */
+  test('annotations 支持创建、读取、更新和删除', async () => {
+    // dataDir 存储测试用应用数据目录。
+    const dataDir = await makeTempDir('annotations-data');
+    try {
+      // filePath 存储标注关联的学习文件路径。
+      const filePath = '/tmp/visual-learn-note.md';
+      // created 存储新建后的完整标注记录。
+      const created = await createAnnotation({
+        filePath,
+        quote: '重点内容',
+        startOffset: 2,
+        endOffset: 6,
+        prefix: '这是',
+        suffix: '之后',
+        comment: '这里要复习',
+        color: 'yellow',
+        timestamp: 100,
+      }, { baseDir: dataDir });
+
+      expect(await getAnnotations(filePath, { baseDir: dataDir })).toEqual([created]);
+
+      // updated 存储更新评论和位置后的完整标注记录。
+      const updated = await updateAnnotation({
+        filePath,
+        id: created.id,
+        comment: '已经理解',
+        startOffset: 3,
+        endOffset: 7,
+        prefix: '新的前文',
+        suffix: '新的后文',
+        timestamp: 200,
+      }, { baseDir: dataDir });
+
+      expect(updated.comment).toBe('已经理解');
+      expect(updated.updatedAt).toBe(200);
+      expect(await getAnnotations(filePath, { baseDir: dataDir })).toEqual([updated]);
+
+      await deleteAnnotation({ filePath, id: created.id }, { baseDir: dataDir });
+      expect(await getAnnotations(filePath, { baseDir: dataDir })).toEqual([]);
+    } finally {
+      await removeTempDir(dataDir);
+    }
+  });
+
+  /**
+   * 验证文章总总结能按文章路径持久化，并在清空内容时删除条目。
+   */
+  test('article summaries 支持创建、读取、更新和清空', async () => {
+    // dataDir 存储测试用应用数据目录。
+    const dataDir = await makeTempDir('article-summaries-data');
+    try {
+      // filePath 存储总结关联的学习文件路径。
+      const filePath = '/tmp/visual-learn-note.md';
+      // created 存储首次保存后的文章总结记录。
+      const created = await setArticleSummary({
+        filePath,
+        content: '这篇文章讲如何把概念教给别人。',
+        timestamp: 100,
+      }, { baseDir: dataDir });
+
+      expect(created).toEqual({
+        filePath,
+        content: '这篇文章讲如何把概念教给别人。',
+        createdAt: 100,
+        updatedAt: 100,
+      });
+      expect(await getArticleSummary(filePath, { baseDir: dataDir })).toEqual(created);
+      expect(await getArticleSummaries({ baseDir: dataDir })).toEqual({ [filePath]: created });
+
+      // updated 存储二次编辑后的文章总结记录。
+      const updated = await setArticleSummary({
+        filePath,
+        content: '这篇文章的核心是用自己的话教会别人。',
+        timestamp: 200,
+      }, { baseDir: dataDir });
+
+      expect(updated).toEqual({
+        filePath,
+        content: '这篇文章的核心是用自己的话教会别人。',
+        createdAt: 100,
+        updatedAt: 200,
+      });
+
+      // cleared 存储清空总结后的返回结果。
+      const cleared = await setArticleSummary({
+        filePath,
+        content: '   ',
+        timestamp: 300,
+      }, { baseDir: dataDir });
+
+      expect(cleared).toBeNull();
+      expect(await getArticleSummary(filePath, { baseDir: dataDir })).toBeNull();
+      expect(await getArticleSummaries({ baseDir: dataDir })).toEqual({});
+    } finally {
+      await removeTempDir(dataDir);
     }
   });
 });

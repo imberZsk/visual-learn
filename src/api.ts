@@ -31,6 +31,21 @@ export const appApi = {
   /** 设置学习进度。 */
   setProgress: (filePath: string, completed: boolean, timestamp: number) =>
     getBridge().setProgress({ filePath, completed, timestamp }),
+  /** 获取文章标注。 */
+  getAnnotations: (filePath: string) => getBridge().getAnnotations({ filePath }),
+  /** 创建文章标注。 */
+  createAnnotation: (payload: VisualLearnAnnotationInput) => getBridge().createAnnotation(payload),
+  /** 更新文章标注。 */
+  updateAnnotation: (payload: VisualLearnAnnotationUpdate) => getBridge().updateAnnotation(payload),
+  /** 删除文章标注。 */
+  deleteAnnotation: (filePath: string, id: string) => getBridge().deleteAnnotation({ filePath, id }),
+  /** 获取所有文章总总结。 */
+  getArticleSummaries: () => getBridge().getArticleSummaries(),
+  /** 获取单篇文章总总结。 */
+  getArticleSummary: (filePath: string) => getBridge().getArticleSummary({ filePath }),
+  /** 设置单篇文章总总结。 */
+  setArticleSummary: (filePath: string, content: string, timestamp: number) =>
+    getBridge().setArticleSummary({ filePath, content, timestamp }),
   /** 读取轻量偏好。 */
   getPreference: (key: string) => getBridge().getPreference(key),
   /** 写入轻量偏好。 */

@@ -1,5 +1,5 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { Layout, theme } from 'antd'
+import { Layout, Result, theme } from 'antd'
 import Header from './components/layout/Header'
 import Dashboard from './pages/Dashboard'
 import NotesLibrary from './pages/NotesLibrary'
@@ -39,10 +39,11 @@ function App() {
             <Route
               path="*"
               element={
-                <div style={{ textAlign: 'center', padding: '50px' }}>
-                  <h1>404</h1>
-                  <p>页面不存在</p>
-                </div>
+                <Result
+                  status="404"
+                  title="404"
+                  subTitle="页面不存在"
+                />
               }
             />
           </Routes>

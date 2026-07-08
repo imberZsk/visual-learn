@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Row, Col, Statistic, Progress, Typography, Tag, Space, Empty } from 'antd'
+import { Button, Card, Row, Col, Statistic, Progress, Typography, Tag, Space, Empty } from 'antd'
 import {
   BookOutlined,
   CheckCircleOutlined,
@@ -245,31 +245,34 @@ const Dashboard: React.FC = () => {
                   {grp.categories.map((cat) => (
                     <Col span={6} key={cat.name}>
                       {/* 学科圆形进度卡片，点击跳转 */}
-                      <div
+                      <Button
+                        type="text"
                         className={`subject-card${cat.percent === 100 ? ' subject-card--done' : ''}`}
                         onClick={() => goToCategory(grp.group, cat.name)}
                         title={`查看 ${cat.name} 的学习内容`}
                       >
-                        <div style={{ position: 'relative', display: 'inline-block' }}>
-                          <Progress
-                            type="circle"
-                            percent={cat.percent}
-                            size={64}
-                            strokeColor={getProgressColor(cat.percent)}
-                            showInfo={cat.percent !== 100}  // 100% 时隐藏数字，改用对号图标
-                          />
-                          {/* 100% 完成时在圆环中心叠加绿色对号 */}
-                          {cat.percent === 100 && (
-                            <CheckCircleFilled className="subject-done-icon" />
-                          )}
-                        </div>
-                        <Text className="subject-name" ellipsis title={cat.name}>
-                          {cat.name}
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: 11 }}>
-                          {cat.done}/{cat.total}
-                        </Text>
-                      </div>
+                        <span className="subject-card-content">
+                          <span style={{ position: 'relative', display: 'inline-block' }}>
+                            <Progress
+                              type="circle"
+                              percent={cat.percent}
+                              size={64}
+                              strokeColor={getProgressColor(cat.percent)}
+                              showInfo={cat.percent !== 100}  // 100% 时隐藏数字，改用对号图标
+                            />
+                            {/* 100% 完成时在圆环中心叠加绿色对号 */}
+                            {cat.percent === 100 && (
+                              <CheckCircleFilled className="subject-done-icon" />
+                            )}
+                          </span>
+                          <Text className="subject-name" ellipsis title={cat.name}>
+                            {cat.name}
+                          </Text>
+                          <Text type="secondary" style={{ fontSize: 11 }}>
+                            {cat.done}/{cat.total}
+                          </Text>
+                        </span>
+                      </Button>
                     </Col>
                   ))}
                 </Row>

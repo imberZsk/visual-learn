@@ -16,6 +16,20 @@ export const IPC = {
   GET_PROGRESS: 'visual-learn:get-progress',
   // 设置学习进度。
   SET_PROGRESS: 'visual-learn:set-progress',
+  // 获取文章标注。
+  GET_ANNOTATIONS: 'visual-learn:get-annotations',
+  // 创建文章标注。
+  CREATE_ANNOTATION: 'visual-learn:create-annotation',
+  // 更新文章标注。
+  UPDATE_ANNOTATION: 'visual-learn:update-annotation',
+  // 删除文章标注。
+  DELETE_ANNOTATION: 'visual-learn:delete-annotation',
+  // 获取所有文章总总结。
+  GET_ARTICLE_SUMMARIES: 'visual-learn:get-article-summaries',
+  // 获取单篇文章总总结。
+  GET_ARTICLE_SUMMARY: 'visual-learn:get-article-summary',
+  // 设置单篇文章总总结。
+  SET_ARTICLE_SUMMARY: 'visual-learn:set-article-summary',
   // 获取轻量偏好。
   GET_PREFERENCE: 'visual-learn:get-preference',
   // 设置轻量偏好。

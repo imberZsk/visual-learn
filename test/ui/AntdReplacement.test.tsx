@@ -23,6 +23,9 @@ const appApiMock = vi.hoisted(() => ({
   createAnnotation: vi.fn(),
   updateAnnotation: vi.fn(),
   deleteAnnotation: vi.fn(),
+  getArticleSummaries: vi.fn(),
+  getArticleSummary: vi.fn(),
+  setArticleSummary: vi.fn(),
   getPreference: vi.fn(),
   setPreference: vi.fn(),
   openInVscode: vi.fn(),
@@ -134,6 +137,9 @@ function resetAppApiMock() {
     updatedAt: payload.timestamp,
   }))
   appApiMock.deleteAnnotation.mockResolvedValue(true)
+  appApiMock.getArticleSummaries.mockResolvedValue({})
+  appApiMock.getArticleSummary.mockResolvedValue(null)
+  appApiMock.setArticleSummary.mockResolvedValue(null)
   appApiMock.getPreference.mockResolvedValue(null)
   appApiMock.setPreference.mockResolvedValue(true)
   appApiMock.openInVscode.mockResolvedValue(true)

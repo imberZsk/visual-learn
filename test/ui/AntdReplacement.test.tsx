@@ -61,10 +61,18 @@ class ResizeObserverMock {
  * @param children - 需要渲染的 React 节点。
  * @param initialEntry - MemoryRouter 初始路由对象。
  */
-function renderWithProviders(children: React.ReactNode, initialEntry: Parameters<typeof MemoryRouter>[0]['initialEntries'][number] = '/dashboard') {
+function renderWithProviders(
+  children: React.ReactNode,
+  initialEntry: NonNullable<
+    Parameters<typeof MemoryRouter>[0]['initialEntries']
+  >[number] = '/dashboard'
+) {
   return render(
     <AntdApp>
-      <MemoryRouter initialEntries={[initialEntry]}>
+      <MemoryRouter
+        initialEntries={[initialEntry]}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         {children}
       </MemoryRouter>
     </AntdApp>
@@ -162,14 +170,19 @@ describe('antd 组件替换', () => {
    */
   test('学习资料页使用 antd Tree 展示三级导航', async () => {
     // initialEntry 存储从概览页跳转到 React 学科的路由状态。
-    const initialEntry = { pathname: '/notes', state: { group: 'AI编程', category: 'React' } }
+    const initialEntry = {
+      pathname: '/notes',
+      state: { group: 'AI编程', category: 'React' },
+    }
     // container 存储渲染后的 DOM 根节点。
     const { container } = renderWithProviders(<NotesLibrary />, initialEntry)
 
     expect(await screen.findByText('AI编程')).toBeTruthy()
     expect(await screen.findAllByText('01-入门')).toHaveLength(2)
     expect(container.querySelector('.notes-nav-tree.ant-tree')).toBeTruthy()
-    expect(container.querySelector('.notes-nav-tree .ant-checkbox')).toBeTruthy()
+    expect(
+      container.querySelector('.notes-nav-tree .ant-checkbox')
+    ).toBeTruthy()
   })
 
   /**
@@ -177,17 +190,25 @@ describe('antd 组件替换', () => {
    */
   test('点击学科目录标题会折叠已展开目录', async () => {
     // initialEntry 存储从概览页跳转到 React 学科的路由状态。
-    const initialEntry = { pathname: '/notes', state: { group: 'AI编程', category: 'React' } }
+    const initialEntry = {
+      pathname: '/notes',
+      state: { group: 'AI编程', category: 'React' },
+    }
     // container 存储渲染后的 DOM 根节点。
     const { container } = renderWithProviders(<NotesLibrary />, initialEntry)
 
     await waitFor(() => {
-      expect(container.querySelector('.nav-tree-title--category .nav-tree-name')?.textContent).toBe('React')
+      expect(
+        container.querySelector('.nav-tree-title--category .nav-tree-name')
+          ?.textContent
+      ).toBe('React')
     })
     expect(container.querySelector('.nav-tree-node--item')).toBeTruthy()
 
     // categoryTitle 存储当前用例渲染出的学科标题节点，避免整文件运行时查询到其他用例残留 DOM。
-    const categoryTitle = container.querySelector('.nav-tree-title--category .nav-tree-name') as HTMLElement
+    const categoryTitle = container.querySelector(
+      '.nav-tree-title--category .nav-tree-name'
+    ) as HTMLElement
     fireEvent.click(categoryTitle)
 
     await waitFor(() => {
@@ -200,11 +221,16 @@ describe('antd 组件替换', () => {
    */
   test('学习资料页打开文章时读取文章标注', async () => {
     // initialEntry 存储从概览页跳转到 React 学科的路由状态。
-    const initialEntry = { pathname: '/notes', state: { group: 'AI编程', category: 'React' } }
+    const initialEntry = {
+      pathname: '/notes',
+      state: { group: 'AI编程', category: 'React' },
+    }
     renderWithProviders(<NotesLibrary />, initialEntry)
 
     await waitFor(() => {
-      expect(appApiMock.getAnnotations).toHaveBeenCalledWith('/study/react/01-入门.md')
+      expect(appApiMock.getAnnotations).toHaveBeenCalledWith(
+        '/study/react/01-入门.md'
+      )
     })
   })
 
@@ -230,7 +256,9 @@ describe('antd 组件替换', () => {
     // container 存储渲染后的 DOM 根节点。
     const { container } = renderWithProviders(<Dashboard />)
 
-    await waitFor(() => expect(container.querySelector('.subject-card.ant-btn')).toBeTruthy())
+    await waitFor(() =>
+      expect(container.querySelector('.subject-card.ant-btn')).toBeTruthy()
+    )
   })
 
   /**
@@ -238,7 +266,9 @@ describe('antd 组件替换', () => {
    */
   test('通用进度条使用 antd Progress', () => {
     // container 存储渲染后的 DOM 根节点。
-    const { container } = render(<ProgressBar current={5} target={10} label="阅读进度" />)
+    const { container } = render(
+      <ProgressBar current={5} target={10} label="阅读进度" />
+    )
 
     expect(screen.getByText('阅读进度')).toBeTruthy()
     expect(screen.getByText('进行中')).toBeTruthy()

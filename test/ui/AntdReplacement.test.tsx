@@ -69,12 +69,7 @@ function renderWithProviders(
 ) {
   return render(
     <AntdApp>
-      <MemoryRouter
-        initialEntries={[initialEntry]}
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
-        {children}
-      </MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>{children}</MemoryRouter>
     </AntdApp>
   )
 }

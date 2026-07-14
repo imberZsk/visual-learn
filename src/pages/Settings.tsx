@@ -113,7 +113,7 @@ const Settings: React.FC = () => {
   return (
     <div className="settings-container">
       <Card title="学习目录" className="settings-card">
-        <Space direction="vertical" style={{ width: '100%' }} size="small">
+        <Space orientation="vertical" style={{ width: '100%' }} size="small">
           <Text type="secondary">
             应用会扫描文章内容目录下的 chapter.md 和普通 .md 文档； 文章旁的 lab
             或 demo 目录会作为“打开代码”的目标。
@@ -186,7 +186,7 @@ const Settings: React.FC = () => {
       </Card>
 
       <Card title="应用信息" className="settings-card">
-        <Space direction="vertical" size="small">
+        <Space orientation="vertical" size="small">
           <Text>应用名称: 学习进度追踪器</Text>
           <Text>版本: 0.0.1</Text>
           <Text>技术栈: Electron + React + TypeScript</Text>

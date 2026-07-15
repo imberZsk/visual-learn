@@ -1,7 +1,7 @@
 {
   "name": "visual-learn",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "用于扫描本地学习笔记、阅读 Markdown 并追踪完成进度的 Electron 桌面应用",
   "author": "imber",
   "license": "MIT",
@@ -54,6 +54,7 @@
     "dayjs": "^1.11.21",
     "echarts": "^6.1.0",
     "echarts-for-react": "^3.0.6",
+    "electron-updater": "^6.8.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",
@@ -114,6 +115,10 @@
       "target": [
         {
           "target": "dmg",
+          "arch": "arm64"
+        },
+        {
+          "target": "zip",
           "arch": "arm64"
         }
       ],

@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron')
 
 // IPC 通道名常量：preload 使用 CommonJS，故在此内联一份并与 electron/ipcChannels.js 保持一致。
 const IPC = {
@@ -21,9 +21,15 @@ const IPC = {
   SET_PREFERENCE: 'visual-learn:set-preference',
   OPEN_IN_VSCODE: 'visual-learn:open-in-vscode',
   SELECT_DIRECTORY: 'visual-learn:select-directory',
-};
+}
 
 contextBridge.exposeInMainWorld('visualLearn', {
+  /** 检查 GitHub Release 是否有新版本。 */
+  checkAppUpdate: () => ipcRenderer.invoke('app-update:check'),
+  /** 下载新版本安装包，完成后才返回。 */
+  downloadAppUpdate: () => ipcRenderer.invoke('app-update:download'),
+  /** 安装已下载版本并重启应用。 */
+  installAppUpdate: () => ipcRenderer.invoke('app-update:install'),
   /**
    * 读取学习目录路径。
    * @returns {Promise<string>} 学习目录路径。
@@ -51,7 +57,8 @@ contextBridge.exposeInMainWorld('visualLearn', {
    * @param {{studyRoot: string}} payload - 扫描参数。
    * @returns {Promise<object[]>} 分类列表。
    */
-  scanStudyNotes: (payload) => ipcRenderer.invoke(IPC.SCAN_STUDY_NOTES, payload),
+  scanStudyNotes: (payload) =>
+    ipcRenderer.invoke(IPC.SCAN_STUDY_NOTES, payload),
   /**
    * 读取 Markdown 内容。
    * @param {{filePath: string, studyRoot: string}} payload - 读取参数。
@@ -80,19 +87,22 @@ contextBridge.exposeInMainWorld('visualLearn', {
    * @param {object} payload - 标注创建参数。
    * @returns {Promise<object>} 创建后的标注。
    */
-  createAnnotation: (payload) => ipcRenderer.invoke(IPC.CREATE_ANNOTATION, payload),
+  createAnnotation: (payload) =>
+    ipcRenderer.invoke(IPC.CREATE_ANNOTATION, payload),
   /**
    * 更新文章标注。
    * @param {object} payload - 标注更新参数。
    * @returns {Promise<object>} 更新后的标注。
    */
-  updateAnnotation: (payload) => ipcRenderer.invoke(IPC.UPDATE_ANNOTATION, payload),
+  updateAnnotation: (payload) =>
+    ipcRenderer.invoke(IPC.UPDATE_ANNOTATION, payload),
   /**
    * 删除文章标注。
    * @param {{filePath: string, id: string}} payload - 标注删除参数。
    * @returns {Promise<boolean>} 删除结果。
    */
-  deleteAnnotation: (payload) => ipcRenderer.invoke(IPC.DELETE_ANNOTATION, payload),
+  deleteAnnotation: (payload) =>
+    ipcRenderer.invoke(IPC.DELETE_ANNOTATION, payload),
   /**
    * 获取所有文章总总结。
    * @returns {Promise<Record<string, object>>} 文件路径到总结记录的映射。
@@ -103,13 +113,15 @@ contextBridge.exposeInMainWorld('visualLearn', {
    * @param {{filePath: string}} payload - 总总结读取参数。
    * @returns {Promise<object|null>} 文章总总结记录。
    */
-  getArticleSummary: (payload) => ipcRenderer.invoke(IPC.GET_ARTICLE_SUMMARY, payload),
+  getArticleSummary: (payload) =>
+    ipcRenderer.invoke(IPC.GET_ARTICLE_SUMMARY, payload),
   /**
    * 设置单篇文章总总结。
    * @param {{filePath: string, content: string, timestamp: number}} payload - 总总结保存参数。
    * @returns {Promise<object|null>} 保存后的总总结，清空时返回 null。
    */
-  setArticleSummary: (payload) => ipcRenderer.invoke(IPC.SET_ARTICLE_SUMMARY, payload),
+  setArticleSummary: (payload) =>
+    ipcRenderer.invoke(IPC.SET_ARTICLE_SUMMARY, payload),
   /**
    * 读取轻量偏好。
    * @param {string} key - 偏好键。
@@ -122,17 +134,20 @@ contextBridge.exposeInMainWorld('visualLearn', {
    * @param {string} value - 偏好值。
    * @returns {Promise<boolean>} 保存结果。
    */
-  setPreference: (key, value) => ipcRenderer.invoke(IPC.SET_PREFERENCE, { key, value }),
+  setPreference: (key, value) =>
+    ipcRenderer.invoke(IPC.SET_PREFERENCE, { key, value }),
   /**
    * 用 VSCode 打开路径。
    * @param {string} targetPath - 要打开的目录或文件路径。
    * @returns {Promise<boolean>} 打开结果。
    */
-  openInVscode: (targetPath) => ipcRenderer.invoke(IPC.OPEN_IN_VSCODE, { targetPath }),
+  openInVscode: (targetPath) =>
+    ipcRenderer.invoke(IPC.OPEN_IN_VSCODE, { targetPath }),
   /**
    * 打开系统目录选择器。
    * @param {{defaultPath?: string}} payload - 选择器参数。
    * @returns {Promise<{canceled: boolean, path?: string}>} 选择结果。
    */
-  selectDirectory: (payload) => ipcRenderer.invoke(IPC.SELECT_DIRECTORY, payload),
-});
+  selectDirectory: (payload) =>
+    ipcRenderer.invoke(IPC.SELECT_DIRECTORY, payload),
+})

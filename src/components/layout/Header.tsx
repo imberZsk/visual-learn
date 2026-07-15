@@ -1,9 +1,24 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Layout, Space, Typography, theme, Tooltip, Button, Drawer, Segmented } from 'antd'
-import { BookOutlined, SunOutlined, MoonFilled, SettingOutlined } from '@ant-design/icons'
+import {
+  Layout,
+  Space,
+  Typography,
+  theme,
+  Tooltip,
+  Button,
+  Drawer,
+  Segmented,
+} from 'antd'
+import {
+  BookOutlined,
+  SunOutlined,
+  MoonFilled,
+  SettingOutlined,
+} from '@ant-design/icons'
 import { useTheme } from '../../contexts/ThemeContext'
 import Settings from '../../pages/Settings'
+import { appApi } from '../../api'
 
 /** antd Layout.Header 的别名 */
 const { Header: AntHeader } = Layout
@@ -16,6 +31,12 @@ const { Text } = Typography
  * 显示顶部横向导航、当前日期、主题切换按钮和设置抽屉入口
  */
 const Header: React.FC = () => {
+  // updateVersion 存储检测到的 GitHub Release 新版本号。
+  const [updateVersion, setUpdateVersion] = useState<string | null>(null)
+  // updateLoading 标记安装包是否正在异步下载。
+  const [updateLoading, setUpdateLoading] = useState(false)
+  // updateDownloaded 标记安装包是否已完整下载。
+  const [updateDownloaded, setUpdateDownloaded] = useState(false)
   // 路由跳转函数，用于顶部导航切换页面
   const navigate = useNavigate()
   // 当前路由位置对象，用于计算顶部导航的选中项
@@ -32,6 +53,39 @@ const Header: React.FC = () => {
   // 设置抽屉的打开状态
   const [settingsOpen, setSettingsOpen] = useState(false)
 
+  useEffect(() => {
+    // mounted 标记组件是否仍挂载，避免异步检查结束后更新已卸载组件。
+    let mounted = true
+    void appApi
+      .checkAppUpdate()
+      .then((result) => {
+        if (mounted && result.available && result.version) {
+          setUpdateVersion(result.version)
+          setUpdateDownloaded(Boolean(result.downloaded))
+        }
+      })
+      .catch(() => undefined)
+    /** 清理更新检查副作用。 */
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  /** 下载更新，下载完成后才开放安装入口。 */
+  const handleAppUpdate = async () => {
+    if (updateDownloaded) {
+      await appApi.installAppUpdate()
+      return
+    }
+    setUpdateLoading(true)
+    try {
+      await appApi.downloadAppUpdate()
+      setUpdateDownloaded(true)
+    } finally {
+      setUpdateLoading(false)
+    }
+  }
+
   // 顶部主导航选项，value 对应当前应用的路由路径
   const navigationItems = [
     { label: '学习概览', value: '/dashboard' },
@@ -39,7 +93,9 @@ const Header: React.FC = () => {
   ]
 
   // 当前顶部导航选中的路由；未知路由时默认高亮学习概览
-  const activeNavigationPath = navigationItems.some((item) => item.value === location.pathname)
+  const activeNavigationPath = navigationItems.some(
+    (item) => item.value === location.pathname
+  )
     ? location.pathname
     : '/dashboard'
 
@@ -81,7 +137,10 @@ const Header: React.FC = () => {
       <Space size={12} wrap>
         <Space size={6}>
           <BookOutlined style={{ color: colorText, fontSize: 16 }} />
-          <Text strong style={{ color: colorText, fontSize: 15, whiteSpace: 'nowrap' }}>
+          <Text
+            strong
+            style={{ color: colorText, fontSize: 15, whiteSpace: 'nowrap' }}
+          >
             学习追踪
           </Text>
         </Space>
@@ -95,7 +154,21 @@ const Header: React.FC = () => {
 
       {/* 右侧：主题切换按钮；深色模式显示太阳（切换到浅色），浅色模式显示月亮（切换到深色） */}
       <Space>
-        <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>{currentDate}</Text>
+        {updateVersion && (
+          <Tooltip title={`新版本 v${updateVersion}`}>
+            <Button
+              size="small"
+              type="primary"
+              loading={updateLoading}
+              onClick={() => void handleAppUpdate()}
+            >
+              {updateDownloaded ? '安装并重启' : '下载更新'}
+            </Button>
+          </Tooltip>
+        )}
+        <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+          {currentDate}
+        </Text>
         <Tooltip title={mode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}>
           <Button
             type="text"

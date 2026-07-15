@@ -1,17 +1,18 @@
-import { app, BrowserWindow, dialog, ipcMain, session } from 'electron';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-import { registerIpcHandlers } from './ipcHandlers.js';
-import { buildCspPolicy } from './security.js';
+import { app, BrowserWindow, dialog, ipcMain, session } from 'electron'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
+import { registerIpcHandlers } from './ipcHandlers.js'
+import { registerAppUpdater } from './appUpdater.js'
+import { buildCspPolicy } from './security.js'
 
 // __dirname 存储当前 Electron 入口文件所在目录。
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url))
 // isDev 标记当前是否开发环境。
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'development'
 // isSmoke 标记当前是否 Electron 启动冒烟自检模式。
-const isSmoke = process.env.VL_SMOKE === '1';
+const isSmoke = process.env.VL_SMOKE === '1'
 // mainWindow 存储主窗口引用，避免被垃圾回收。
-let mainWindow = null;
+let mainWindow = null
 
 /**
  * 获取渲染进程入口地址。
@@ -19,10 +20,10 @@ let mainWindow = null;
  */
 function getRendererTarget() {
   if (isDev) {
-    return process.env.ELECTRON_RENDERER_URL || 'http://127.0.0.1:5273';
+    return process.env.ELECTRON_RENDERER_URL || 'http://127.0.0.1:5273'
   }
 
-  return join(__dirname, '../dist/index.html');
+  return join(__dirname, '../dist/index.html')
 }
 
 /**
@@ -44,19 +45,19 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false,
     },
-  });
+  })
 
   if (isDev) {
-    mainWindow.loadURL(getRendererTarget());
+    mainWindow.loadURL(getRendererTarget())
   } else {
-    mainWindow.loadFile(getRendererTarget());
+    mainWindow.loadFile(getRendererTarget())
   }
 
   mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+    mainWindow = null
+  })
 
-  return mainWindow;
+  return mainWindow
 }
 
 /**
@@ -65,7 +66,10 @@ function createWindow() {
  */
 function setupCSP() {
   // policy 存储当前环境对应的 CSP 字符串。
-  const policy = buildCspPolicy({ isDev, rendererUrl: isDev ? getRendererTarget() : undefined });
+  const policy = buildCspPolicy({
+    isDev,
+    rendererUrl: isDev ? getRendererTarget() : undefined,
+  })
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
@@ -73,8 +77,8 @@ function setupCSP() {
         ...details.responseHeaders,
         'Content-Security-Policy': [policy],
       },
-    });
-  });
+    })
+  })
 }
 
 /**
@@ -85,47 +89,52 @@ function setupCSP() {
 async function runSmokeCheck(win) {
   try {
     await new Promise((resolvePromise, rejectPromise) => {
-      win.webContents.once('did-finish-load', resolvePromise);
+      win.webContents.once('did-finish-load', resolvePromise)
       win.webContents.once('did-fail-load', (_event, code, description) => {
-        rejectPromise(new Error(`load failed ${code} ${description}`));
-      });
-    });
+        rejectPromise(new Error(`load failed ${code} ${description}`))
+      })
+    })
 
     // apiReady 存储 preload 暴露 API 是否可用。
     const apiReady = await win.webContents.executeJavaScript(
-      "typeof window.visualLearn === 'object' && typeof window.visualLearn.scanStudyNotes === 'function' && typeof window.visualLearn.getProgress === 'function'",
-    );
+      "typeof window.visualLearn === 'object' && typeof window.visualLearn.scanStudyNotes === 'function' && typeof window.visualLearn.getProgress === 'function'"
+    )
     if (!apiReady) {
-      throw new Error('window.visualLearn 未正确暴露');
+      throw new Error('window.visualLearn 未正确暴露')
     }
 
-    console.log('SMOKE_OK preload-api-available');
-    app.exit(0);
+    console.log('SMOKE_OK preload-api-available')
+    app.exit(0)
   } catch (error) {
-    console.error('SMOKE_FAIL', error.message);
-    app.exit(1);
+    console.error('SMOKE_FAIL', error.message)
+    app.exit(1)
   }
 }
 
-registerIpcHandlers(ipcMain, { dialog });
+registerIpcHandlers(ipcMain, { dialog })
+// appUpdater 存储打包环境的真实更新器；开发和测试使用空替身且不会加载 Electron 更新模块。
+const appUpdater = app.isPackaged
+  ? (await import('electron-updater')).autoUpdater
+  : {}
+registerAppUpdater(ipcMain, appUpdater, app.isPackaged)
 
 app.whenReady().then(() => {
-  setupCSP();
+  setupCSP()
   // win 存储新创建的主窗口。
-  const win = createWindow();
+  const win = createWindow()
   if (isSmoke) {
-    runSmokeCheck(win);
+    runSmokeCheck(win)
   }
-});
+})
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    createWindow()
   }
-});
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit();
+    app.quit()
   }
-});
+})

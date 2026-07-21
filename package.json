@@ -1,8 +1,9 @@
 {
   "name": "visual-learn",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "用于扫描本地学习笔记、阅读 Markdown 并追踪完成进度的 Electron 桌面应用",
+  "productName": "Visual Learn",
   "author": "imber",
   "license": "MIT",
   "packageManager": "pnpm@11.13.0",
@@ -93,7 +94,7 @@
   },
   "build": {
     "appId": "com.imber.visual-learn",
-    "productName": "VisualLearn",
+    "productName": "Visual Learn",
     "publish": [
       {
         "provider": "github",
@@ -112,6 +113,7 @@
       "package.json"
     ],
     "mac": {
+      "artifactName": "VisualLearn-${version}-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",
@@ -126,7 +128,7 @@
       "identity": null
     },
     "dmg": {
-      "title": "VisualLearn ${version}"
+      "title": "Visual Learn ${version}"
     },
     "win": {
       "target": [

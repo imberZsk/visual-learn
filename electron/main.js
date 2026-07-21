@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, session } from 'electron'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { registerIpcHandlers } from './ipcHandlers.js'
-import { registerAppUpdater } from './appUpdater.js'
+import { loadAutoUpdater, registerAppUpdater } from './appUpdater.js'
 import { buildCspPolicy } from './security.js'
 
 // __dirname 存储当前 Electron 入口文件所在目录。
@@ -113,9 +113,10 @@ async function runSmokeCheck(win) {
 
 registerIpcHandlers(ipcMain, { dialog })
 // appUpdater 存储打包环境的真实更新器；开发和测试使用空替身且不会加载 Electron 更新模块。
-const appUpdater = app.isPackaged
-  ? (await import('electron-updater')).autoUpdater
-  : {}
+const appUpdater = await loadAutoUpdater(
+  () => import('electron-updater'),
+  app.isPackaged
+)
 registerAppUpdater(ipcMain, appUpdater, app.isPackaged)
 
 app.whenReady().then(() => {

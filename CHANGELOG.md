@@ -1,0 +1,40 @@
+# Changelog
+
+本项目所有重要变更记录于此，遵循语义化版本规则。
+
+## 0.3.1 - 2026-07-21
+
+### 修复
+
+- 兼容 `electron-updater` 的 CommonJS 导出结构，并在更新模块加载失败时安全降级，避免打包应用因更新器解析异常而无法启动。
+- 应用展示名改为 `Visual Learn`，Release 安装说明补充 `sudo`，公开资产严格限制为 macOS DMG、Windows 安装版和便携版三个用户安装包。
+- 公开前移除仓库中的个人学习记录和绝对路径，默认目录改为基于当前用户主目录动态生成，避免泄露本机信息。
+
+## 0.3.0 - 2026-07-15
+
+### 新增
+
+- 启动后自动检查 GitHub Release，新版本可先异步下载，下载完成后再由用户确认安装并重启。
+
+## 0.2.0 - 2026-07-15
+
+### 变更
+
+- 统一升级至 React 19、Ant Design 6、Electron 43、Vite 8、TypeScript 6 与 pnpm 11.13，并适配 TypeScript 6 和 React Router 7。
+- 统一 macOS arm64 与 Windows x64 双平台构建、测试和打包口径，并补齐开源协议、安全策略与行为准则。
+
+## 0.1.0 - 2026-07-14
+
+### 新增
+
+- 接入 ESLint、Prettier、Husky、Commitlint 与 lint-staged，并在 CI 中执行完整代码检查。
+
+### 修复
+
+- 测试环境的 MemoryRouter 提前启用 React Router v7 兼容开关，消除完整测试中的 Future Flag 警告。
+
+## 0.0.2 - 2026-07-14
+
+### 修复
+
+- 提交公开的 npmmirror registry 配置，并为 Electron 打包命令配置 Electron 与 electron-builder 二进制镜像，减少依赖安装和打包下载耗时；私有凭据继续仅允许放在用户级 `.npmrc`。

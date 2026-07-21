@@ -1,0 +1,25 @@
+.settings-container {
+  padding: 0;
+  min-height: 0;
+}
+
+.settings-card {
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.settings-card .ant-card-head-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 响应式适配：小屏减小内边距 */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 0;
+  }
+
+  .settings-card {
+    margin-bottom: 12px;
+  }
+}

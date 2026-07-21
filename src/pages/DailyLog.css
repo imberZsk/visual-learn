@@ -1,0 +1,64 @@
+.daily-log-container {
+  padding: 0;
+  background-color: #f0f2f5;
+  min-height: 0;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 12px;
+}
+
+.log-form-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 12px;
+}
+
+.log-list-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.log-list-item {
+  padding: 10px 14px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.3s ease;
+}
+
+.log-list-item:hover {
+  background-color: #fafafa;
+}
+
+.log-date {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.log-content {
+  margin: 6px 0;
+  color: #595959;
+  line-height: 1.6;
+}
+
+.log-tags {
+  margin-top: 6px;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .daily-log-container {
+    padding: 0;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .log-list-item {
+    padding: 10px 12px;
+  }
+}

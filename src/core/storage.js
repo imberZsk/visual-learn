@@ -1,8 +1,9 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 
-// DEFAULT_STORAGE_DIR 存储应用默认持久化目录，兼容历史桌面版本的数据位置。
-export const DEFAULT_STORAGE_DIR = '/Users/imber/.visualLearn';
+// DEFAULT_STORAGE_DIR 存储当前用户主目录下的应用默认持久化目录。
+export const DEFAULT_STORAGE_DIR = join(homedir(), '.visualLearn')
 
 /**
  * 获取本次运行使用的持久化根目录。
@@ -10,7 +11,7 @@ export const DEFAULT_STORAGE_DIR = '/Users/imber/.visualLearn';
  * @returns {string} 持久化根目录绝对路径。
  */
 export function getStorageDir(options = {}) {
-  return options.baseDir || DEFAULT_STORAGE_DIR;
+  return options.baseDir || DEFAULT_STORAGE_DIR
 }
 
 /**
@@ -21,8 +22,8 @@ export function getStorageDir(options = {}) {
  */
 export function getStorageFilePath(fileName, options = {}) {
   // storageDir 存储本次调用使用的持久化根目录。
-  const storageDir = getStorageDir(options);
-  return join(storageDir, fileName);
+  const storageDir = getStorageDir(options)
+  return join(storageDir, fileName)
 }
 
 /**
@@ -32,8 +33,8 @@ export function getStorageFilePath(fileName, options = {}) {
  */
 export async function ensureStorageDir(options = {}) {
   // storageDir 存储本次调用使用的持久化根目录。
-  const storageDir = getStorageDir(options);
-  await mkdir(storageDir, { recursive: true });
+  const storageDir = getStorageDir(options)
+  await mkdir(storageDir, { recursive: true })
 }
 
 /**
@@ -44,10 +45,10 @@ export async function ensureStorageDir(options = {}) {
 export async function readJsonFile(filePath) {
   try {
     // content 存储 JSON 文件文本内容。
-    const content = await readFile(filePath, 'utf8');
-    return JSON.parse(content);
+    const content = await readFile(filePath, 'utf8')
+    return JSON.parse(content)
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -59,13 +60,13 @@ export async function readJsonFile(filePath) {
 export async function readFirstValidJsonWithSource(paths) {
   for (const filePath of paths) {
     // data 存储当前候选文件解析出的 JSON 数据。
-    const data = await readJsonFile(filePath);
+    const data = await readJsonFile(filePath)
     if (data !== null) {
-      return { data, sourcePath: filePath };
+      return { data, sourcePath: filePath }
     }
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -76,8 +77,8 @@ export async function readFirstValidJsonWithSource(paths) {
  * @returns {Promise<void>} 写入完成后 resolve。
  */
 export async function writeJsonFile(filePath, data, options = {}) {
-  await ensureStorageDir(options);
+  await ensureStorageDir(options)
   // content 存储格式化后的 JSON 文本。
-  const content = JSON.stringify(data, null, 2);
-  await writeFile(filePath, content, 'utf8');
+  const content = JSON.stringify(data, null, 2)
+  await writeFile(filePath, content, 'utf8')
 }

@@ -137,9 +137,9 @@ describe('storage/config/preferences/progress', () => {
   })
 
   /**
-   * 验证旧版进度文件可一次性迁移到新的统一持久化目录。
+   * 验证进度读取不会访问应用数据目录之外的旧文件。
    */
-  test('getProgress 会读取并迁移 legacy progress 文件', async () => {
+  test('getProgress 不读取外部 legacy progress 文件', async () => {
     // dataDir 存储测试用应用数据目录。
     const dataDir = await makeTempDir('progress-migrate-data')
     // legacyDir 存储模拟旧进度文件所在目录。
@@ -156,10 +156,8 @@ describe('storage/config/preferences/progress', () => {
 
       expect(
         await getProgress({ baseDir: dataDir, legacyProgressPath: legacyPath })
-      ).toEqual({ '/tmp/a.md': true })
-      expect(await getProgress({ baseDir: dataDir })).toEqual({
-        '/tmp/a.md': true,
-      })
+      ).toEqual({})
+      expect(await getProgress({ baseDir: dataDir })).toEqual({})
     } finally {
       await removeTempDir(dataDir)
       await removeTempDir(legacyDir)

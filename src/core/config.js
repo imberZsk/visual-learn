@@ -1,13 +1,14 @@
-import { existsSync, statSync } from 'node:fs';
-import { join } from 'node:path';
-import { getStorageFilePath, readFirstValidJsonWithSource, writeJsonFile } from './storage.js';
+import { statSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import {
+  getStorageFilePath,
+  readFirstValidJsonWithSource,
+  writeJsonFile,
+} from './storage.js'
 
-// PRIMARY_STUDY_PATH 存储新版默认文章目录。
-const PRIMARY_STUDY_PATH = '/Users/imber/Desktop/knowledge';
-// LEGACY_STUDY_PATH 存储旧版默认文章目录。
-const LEGACY_STUDY_PATH = '/Users/imber/Desktop/imber';
-// LEGACY_CONFIG_PATH 存储旧版配置文件路径。
-const LEGACY_CONFIG_PATH = '/Users/imber/.visual-learn-config.json';
+// DEFAULT_STUDY_PATH 存储当前用户文稿目录下的默认学习资料目录。
+const DEFAULT_STUDY_PATH = join(homedir(), 'Documents', 'Visual Learn')
 
 /**
  * 判断路径是否是存在的目录。
@@ -16,9 +17,9 @@ const LEGACY_CONFIG_PATH = '/Users/imber/.visual-learn-config.json';
  */
 function isDirectory(dirPath) {
   try {
-    return statSync(dirPath).isDirectory();
+    return statSync(dirPath).isDirectory()
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -29,10 +30,10 @@ function isDirectory(dirPath) {
  */
 export function getDefaultStudyPath(options = {}) {
   if (options.defaultStudyPath) {
-    return options.defaultStudyPath;
+    return options.defaultStudyPath
   }
 
-  return existsSync(PRIMARY_STUDY_PATH) ? PRIMARY_STUDY_PATH : LEGACY_STUDY_PATH;
+  return DEFAULT_STUDY_PATH
 }
 
 /**
@@ -41,7 +42,7 @@ export function getDefaultStudyPath(options = {}) {
  * @returns {string} 配置文件绝对路径。
  */
 function getConfigFilePath(options = {}) {
-  return getStorageFilePath('config.json', options);
+  return getStorageFilePath('config.json', options)
 }
 
 /**
@@ -52,56 +53,60 @@ function getConfigFilePath(options = {}) {
  */
 function normalizeConfig(value, defaultStudyPath) {
   // rawConfig 存储对象形态的配置数据。
-  const rawConfig = value && typeof value === 'object' ? value : {};
+  const rawConfig = value && typeof value === 'object' ? value : {}
   // studyPath 存储文章目录路径，空值时使用默认目录。
-  const studyPath = typeof rawConfig.study_path === 'string'
-    ? rawConfig.study_path
-    : typeof rawConfig.studyPath === 'string'
-      ? rawConfig.studyPath
-      : defaultStudyPath;
+  const studyPath =
+    typeof rawConfig.study_path === 'string'
+      ? rawConfig.study_path
+      : typeof rawConfig.studyPath === 'string'
+        ? rawConfig.studyPath
+        : defaultStudyPath
   // vscodePath 存储 VSCode 打开目录，空值时跟随文章目录。
-  const vscodePath = typeof rawConfig.vscode_path === 'string'
-    ? rawConfig.vscode_path
-    : typeof rawConfig.vscodePath === 'string'
-      ? rawConfig.vscodePath
-      : studyPath;
+  const vscodePath =
+    typeof rawConfig.vscode_path === 'string'
+      ? rawConfig.vscode_path
+      : typeof rawConfig.vscodePath === 'string'
+        ? rawConfig.vscodePath
+        : studyPath
 
   return {
     studyPath: studyPath.trim() ? studyPath : defaultStudyPath,
-    vscodePath: vscodePath.trim() ? vscodePath : (studyPath.trim() ? studyPath : defaultStudyPath),
-  };
+    vscodePath: vscodePath.trim()
+      ? vscodePath
+      : studyPath.trim()
+        ? studyPath
+        : defaultStudyPath,
+  }
 }
 
 /**
- * 读取应用配置，并在需要时迁移旧路径或补齐字段。
- * @param {{baseDir?: string, defaultStudyPath?: string, legacyConfigPath?: string}} options - 读取配置的选项。
+ * 读取应用配置，并在需要时补齐字段。
+ * @param {{baseDir?: string, defaultStudyPath?: string}} options - 读取配置的选项。
  * @returns {Promise<{studyPath: string, vscodePath: string}>} 应用配置。
  */
 export async function loadConfig(options = {}) {
   // defaultStudyPath 存储当前机器可用的默认学习目录。
-  const defaultStudyPath = getDefaultStudyPath(options);
+  const defaultStudyPath = getDefaultStudyPath(options)
   // configPath 存储新版配置文件路径。
-  const configPath = getConfigFilePath(options);
-  // legacyPath 存储旧版配置文件路径；测试注入 baseDir 时默认隔离真实用户配置。
-  const legacyPath = options.legacyConfigPath || (options.baseDir ? null : LEGACY_CONFIG_PATH);
-  // candidatePaths 存储按优先级排列的配置读取候选路径。
-  const candidatePaths = [configPath, legacyPath].filter(Boolean);
-  // loaded 存储候选配置文件的第一个有效读取结果。
-  const loaded = await readFirstValidJsonWithSource(candidatePaths);
+  const configPath = getConfigFilePath(options)
+  // loaded 存储当前配置文件的有效读取结果。
+  const loaded = await readFirstValidJsonWithSource([configPath])
 
   if (!loaded) {
-    return { studyPath: defaultStudyPath, vscodePath: defaultStudyPath };
+    return { studyPath: defaultStudyPath, vscodePath: defaultStudyPath }
   }
 
   // config 存储标准化后的配置对象。
-  const config = normalizeConfig(loaded.data, defaultStudyPath);
+  const config = normalizeConfig(loaded.data, defaultStudyPath)
   // shouldPersist 标记是否需要写回新版配置文件。
-  const shouldPersist = loaded.sourcePath !== configPath || JSON.stringify(loaded.data) !== JSON.stringify(config);
+  const shouldPersist =
+    loaded.sourcePath !== configPath ||
+    JSON.stringify(loaded.data) !== JSON.stringify(config)
   if (shouldPersist) {
-    await writeJsonFile(configPath, config, options);
+    await writeJsonFile(configPath, config, options)
   }
 
-  return config;
+  return config
 }
 
 /**
@@ -112,7 +117,7 @@ export async function loadConfig(options = {}) {
  */
 function validateDirectory(dirPath, label) {
   if (!isDirectory(dirPath)) {
-    throw new Error(`${label}不存在或不是目录: ${dirPath}`);
+    throw new Error(`${label}不存在或不是目录: ${dirPath}`)
   }
 }
 
@@ -123,18 +128,18 @@ function validateDirectory(dirPath, label) {
  * @returns {Promise<void>} 写入完成后 resolve。
  */
 export async function setStudyPath(studyPath, options = {}) {
-  validateDirectory(studyPath, '文章目录');
+  validateDirectory(studyPath, '文章目录')
   // config 存储当前完整配置，避免更新文章目录时丢失 VSCode 目录。
-  const config = await loadConfig(options);
+  const config = await loadConfig(options)
   // vscodeShouldFollow 标记 VSCode 目录是否仍跟随旧文章目录。
-  const vscodeShouldFollow = config.vscodePath === config.studyPath;
+  const vscodeShouldFollow = config.vscodePath === config.studyPath
   // nextConfig 存储写回文件的新配置。
   const nextConfig = {
     studyPath,
     vscodePath: vscodeShouldFollow ? studyPath : config.vscodePath,
-  };
+  }
 
-  await writeJsonFile(getConfigFilePath(options), nextConfig, options);
+  await writeJsonFile(getConfigFilePath(options), nextConfig, options)
 }
 
 /**
@@ -144,16 +149,16 @@ export async function setStudyPath(studyPath, options = {}) {
  * @returns {Promise<void>} 写入完成后 resolve。
  */
 export async function setVscodePath(vscodePath, options = {}) {
-  validateDirectory(vscodePath, 'VSCode 目录');
+  validateDirectory(vscodePath, 'VSCode 目录')
   // config 存储当前完整配置，避免更新 VSCode 目录时丢失文章目录。
-  const config = await loadConfig(options);
+  const config = await loadConfig(options)
   // nextConfig 存储写回文件的新配置。
   const nextConfig = {
     studyPath: config.studyPath,
     vscodePath,
-  };
+  }
 
-  await writeJsonFile(getConfigFilePath(options), nextConfig, options);
+  await writeJsonFile(getConfigFilePath(options), nextConfig, options)
 }
 
 /**
@@ -163,8 +168,8 @@ export async function setVscodePath(vscodePath, options = {}) {
  */
 export async function getStudyPath(options = {}) {
   // config 存储当前应用配置。
-  const config = await loadConfig(options);
-  return config.studyPath;
+  const config = await loadConfig(options)
+  return config.studyPath
 }
 
 /**
@@ -174,8 +179,8 @@ export async function getStudyPath(options = {}) {
  */
 export async function getVscodePath(options = {}) {
   // config 存储当前应用配置。
-  const config = await loadConfig(options);
-  return config.vscodePath;
+  const config = await loadConfig(options)
+  return config.vscodePath
 }
 
 /**
@@ -184,5 +189,5 @@ export async function getVscodePath(options = {}) {
  * @returns {string} 配置文件路径。
  */
 export function getConfigPath(options = {}) {
-  return join(getConfigFilePath(options));
+  return join(getConfigFilePath(options))
 }

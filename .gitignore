@@ -9,6 +9,7 @@ dist-ssr/
 release/
 coverage/
 .nyc_output/
+data/
 *.dmg
 *.exe
 *.zip

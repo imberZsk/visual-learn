@@ -54,7 +54,7 @@ scripts/           dev 端口选择、启动冒烟验证等辅助脚本
 
 - 学习目录路径、VSCode 打开目录、轻量偏好等配置由 `src/core/config.js` / `preferences.js` 管理。
 - 学习进度、文章标注、文章总结等本地数据写入应用自己的存储目录。
-- `src/core/progress.js` 仍兼容历史进度文件路径 `/Users/imber/Desktop/ai/visual-learn/data/progress.json`，用于迁移旧数据；新增逻辑不要再依赖旧路径。
+- 应用配置和学习进度保存在当前用户主目录下的 `.visualLearn` 中，仓库不得提交真实用户数据或个人绝对路径。
 
 ## 开发约定
 

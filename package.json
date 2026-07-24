@@ -113,6 +113,7 @@
       "package.json"
     ],
     "mac": {
+      "icon": "build/icon.icns",
       "artifactName": "VisualLearn-${version}-${arch}.${ext}",
       "target": [
         {
@@ -131,6 +132,7 @@
       "title": "Visual Learn ${version}"
     },
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         {
           "target": "nsis",

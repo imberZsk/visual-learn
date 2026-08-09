@@ -1,0 +1,114 @@
+.progress-bar__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.progress-bar__milestones {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-inline: 4px;
+}
+
+.progress-bar__milestones .ant-typography,
+.heatmap-card .ant-typography {
+  font-size: 12px;
+}
+
+.heatmap-card__title.ant-typography {
+  margin-top: 0;
+}
+
+.heatmap-scroll {
+  overflow-x: auto;
+}
+
+.heatmap-canvas {
+  display: inline-block;
+  min-width: 100%;
+}
+
+.heatmap-months {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.heatmap-months__spacer {
+  width: 32px;
+}
+
+.heatmap-month {
+  display: flex;
+  flex-direction: column;
+  margin-left: 4px;
+}
+
+.heatmap-month .ant-typography {
+  margin-bottom: 4px;
+}
+
+.heatmap-grid {
+  display: flex;
+}
+
+.heatmap-week-labels {
+  display: flex;
+  flex-direction: column;
+  margin-right: 8px;
+}
+
+.heatmap-week-labels .ant-typography {
+  height: 12px;
+  margin-bottom: 4px;
+  line-height: 12px;
+}
+
+.heatmap-weeks {
+  display: flex;
+  gap: 4px;
+}
+
+.heatmap-week {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heatmap-cell {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.heatmap-cell--empty {
+  background: transparent;
+}
+
+.heatmap-cell--level-0 {
+  background: rgb(var(--vl-border));
+}
+
+.heatmap-cell--level-1 {
+  background: rgb(var(--vl-accent) / 0.24);
+}
+
+.heatmap-cell--level-2 {
+  background: rgb(var(--vl-accent) / 0.48);
+}
+
+.heatmap-cell--level-3 {
+  background: rgb(var(--vl-accent) / 0.74);
+}
+
+.heatmap-cell--level-4 {
+  background: rgb(var(--vl-accent));
+}
+
+.heatmap-legend.ant-space {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}

@@ -4,21 +4,16 @@ import {
   Layout,
   Space,
   Typography,
-  theme,
   Tooltip,
   Button,
   Drawer,
   Segmented,
 } from 'antd'
-import {
-  BookOutlined,
-  SunOutlined,
-  MoonFilled,
-  SettingOutlined,
-} from '@ant-design/icons'
+import { SunOutlined, MoonFilled, SettingOutlined } from '@ant-design/icons'
 import { useTheme } from '../../contexts/ThemeContext'
 import Settings from '../../pages/Settings'
 import { appApi } from '../../api'
+import './Header.css'
 
 /** antd Layout.Header 的别名 */
 const { Header: AntHeader } = Layout
@@ -41,11 +36,6 @@ const Header: React.FC = () => {
   const navigate = useNavigate()
   // 当前路由位置对象，用于计算顶部导航的选中项
   const location = useLocation()
-
-  // 读取主题 token，使头部背景与分隔线随明暗主题自适应
-  const {
-    token: { colorBgContainer, colorSplit, colorText, colorTextSecondary },
-  } = theme.useToken()
 
   // 当前主题模式（'dark' | 'light'）及切换函数
   const { mode, toggleTheme } = useTheme()
@@ -118,42 +108,29 @@ const Header: React.FC = () => {
   }
 
   return (
-    <AntHeader
-      style={{
-        background: colorBgContainer,
-        height: 'auto',
-        minHeight: 48,
-        lineHeight: 'normal',
-        padding: '0 14px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        borderBottom: `1px solid ${colorSplit}`,
-        gap: 12,
-      }}
-    >
+    <AntHeader className="app-header">
       {/* 左侧：产品名与主导航 */}
-      <Space size={12} wrap>
-        <Space size={6}>
-          <BookOutlined style={{ color: colorText, fontSize: 16 }} />
-          <Text
-            strong
-            style={{ color: colorText, fontSize: 15, whiteSpace: 'nowrap' }}
-          >
-            学习追踪
-          </Text>
-        </Space>
-        <Segmented
-          size="small"
-          value={activeNavigationPath}
-          options={navigationItems}
-          onChange={handleNavigationChange}
-        />
-      </Space>
+      <div className="app-header__primary">
+        <div className="app-brand">
+          <div className="app-brand__text">
+            <Text strong className="app-brand__name">
+              Visual Learn
+            </Text>
+            <span className="app-brand__subtitle">学习追踪工作台</span>
+          </div>
+        </div>
+        <nav aria-label="主导航">
+          <Segmented
+            className="app-primary-nav"
+            value={activeNavigationPath}
+            options={navigationItems}
+            onChange={handleNavigationChange}
+          />
+        </nav>
+      </div>
 
       {/* 右侧：主题切换按钮；深色模式显示太阳（切换到浅色），浅色模式显示月亮（切换到深色） */}
-      <Space>
+      <Space className="app-header__actions" size={8}>
         {updateVersion && (
           <Tooltip title={`新版本 v${updateVersion}`}>
             <Button
@@ -166,7 +143,7 @@ const Header: React.FC = () => {
             </Button>
           </Tooltip>
         )}
-        <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+        <Text type="secondary" className="app-header__date">
           {currentDate}
         </Text>
         <Tooltip title={mode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}>
@@ -176,7 +153,8 @@ const Header: React.FC = () => {
             size="small"
             icon={mode === 'dark' ? <SunOutlined /> : <MoonFilled />}
             onClick={toggleTheme}
-            style={{ fontSize: 16, color: colorTextSecondary }}
+            className="app-header__icon-button"
+            aria-label={mode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
           />
         </Tooltip>
 
@@ -188,7 +166,8 @@ const Header: React.FC = () => {
             size="small"
             icon={<SettingOutlined />}
             onClick={() => setSettingsOpen(true)}
-            style={{ fontSize: 16, color: colorTextSecondary }}
+            className="app-header__icon-button"
+            aria-label="设置"
           />
         </Tooltip>
       </Space>
@@ -197,8 +176,9 @@ const Header: React.FC = () => {
         title="设置"
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
-        width={520}
-        destroyOnClose
+        rootClassName="settings-drawer"
+        size={560}
+        destroyOnHidden
       >
         <Settings />
       </Drawer>

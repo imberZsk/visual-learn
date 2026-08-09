@@ -27,61 +27,50 @@ function expectIncludes(content, expected, message) {
 
 // appContent 存储应用根布局组件源码，用于检查外层留白是否收紧
 const appContent = readProjectFile('src/App.tsx')
-// headerContent 存储头部组件源码，用于检查头部高度和横向内边距
-const headerContent = readProjectFile('src/components/layout/Header.tsx')
-// sidebarContent 存储侧边栏组件源码，用于检查 Logo 区高度和菜单高度
-const sidebarContent = readProjectFile('src/components/layout/Sidebar.tsx')
+// headerCss 存储头部样式，用于检查头部高度和横向内边距。
+const headerCss = readProjectFile('src/components/layout/Header.css')
 // notesCss 存储学习资料页样式，用于检查视口高度计算和阅读区密度
 const notesCss = readProjectFile('src/pages/NotesLibrary.css')
-// dashboardContent 存储概览页源码，用于检查页头和卡片间距
-const dashboardContent = readProjectFile('src/pages/Dashboard.tsx')
+// dashboardCss 存储概览页样式，用于检查统计带和工作区网格。
+const dashboardCss = readProjectFile('src/pages/Dashboard.css')
 // settingsCss 存储设置页样式，用于检查页面标题和卡片间距
 const settingsCss = readProjectFile('src/pages/Settings.css')
 
 expectIncludes(
   appContent,
-  "className=\"app-content\"",
-  '主内容区应使用统一的紧凑布局 class，而不是散落的内联大留白。'
+  'className="app-shell"',
+  '应用应使用统一视口外壳，将滚动交给页面工作区。'
 )
 expectIncludes(
-  headerContent,
-  'height: 48',
-  '头部高度应压缩到 48px，减少顶部占用。'
+  headerCss,
+  'height: 56px;',
+  '头部应使用稳定的 56px 产品导航高度。'
 )
 expectIncludes(
-  sidebarContent,
-  'width={176}',
-  '侧边栏宽度应适度压缩到 176px。'
+  headerCss,
+  'padding: 0 24px;',
+  '头部应使用 24px 横向内边距对齐产品与全局操作。'
 )
-expectIncludes(
-  sidebarContent,
-  "height: 'calc(100% - 48px)'",
-  '侧边栏菜单高度应匹配 48px Logo 区。'
-)
+expectIncludes(notesCss, 'height: 100%;', '学习资料页应填满应用主工作区。')
 expectIncludes(
   notesCss,
-  'height: calc(100vh - 96px);',
-  '学习资料页高度应匹配 48px Header + 24px 内容上下留白 + 24px 内容内边距。'
+  'width: clamp(264px, 24vw, 320px);',
+  '学习目录应控制在 264-320px，避免挤压阅读区。'
 )
 expectIncludes(
-  notesCss,
-  'padding: 0 28px;',
-  '阅读正文横向留白应收紧但保留可读宽度。'
+  dashboardCss,
+  'grid-template-columns: repeat(4, minmax(0, 1fr));',
+  '概览统计应使用统一四列摘要带。'
 )
 expectIncludes(
-  dashboardContent,
-  'className="dashboard-page"',
-  '概览页应使用紧凑页头 class，避免散落内联间距。'
-)
-expectIncludes(
-  dashboardContent,
-  'gutter={[12, 12]}',
-  '概览页卡片栅格间距应收紧到 12px。'
+  dashboardCss,
+  'grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);',
+  '概览主工作区应并排总进度与学科列表。'
 )
 expectIncludes(
   settingsCss,
-  'margin-bottom: 12px !important;',
-  '设置页标题下方间距应收紧到 12px。'
+  'margin-bottom: 8px;',
+  '设置标签与路径控件应使用 8px 标准间距。'
 )
 
 console.log('compact layout checks passed')

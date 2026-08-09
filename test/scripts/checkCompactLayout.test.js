@@ -17,15 +17,14 @@ describe('check-compact-layout 静态布局校验', () => {
   test('全部片段存在时校验通过', async () => {
     // allFragments 存储脚本会断言的全部片段，拼进同一段文本让任意文件读取都命中。
     const allFragments = [
-      'className="app-content"',
-      'height: 48',
-      'width={176}',
-      "height: 'calc(100% - 48px)'",
-      'height: calc(100vh - 96px);',
-      'padding: 0 28px;',
-      'className="dashboard-page"',
-      'gutter={[12, 12]}',
-      'margin-bottom: 12px !important;',
+      'className="app-shell"',
+      'height: 56px;',
+      'padding: 0 24px;',
+      'height: 100%;',
+      'width: clamp(264px, 24vw, 320px);',
+      'grid-template-columns: repeat(4, minmax(0, 1fr));',
+      'grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);',
+      'margin-bottom: 8px;',
     ].join('\n')
 
     // 拦截文件读取，返回覆盖所有断言片段的假内容。
@@ -53,6 +52,6 @@ describe('check-compact-layout 静态布局校验', () => {
     // 首个断言失败即抛错，导入应 reject。
     await expect(
       import('../../scripts/check-compact-layout.mjs')
-    ).rejects.toThrow('主内容区应使用统一的紧凑布局')
+    ).rejects.toThrow('应用应使用统一视口外壳')
   })
 })

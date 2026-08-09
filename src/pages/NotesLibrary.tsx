@@ -17,7 +17,7 @@ import {
   CodeOutlined,
   ReloadOutlined,
   FileMarkdownOutlined,
-  CheckCircleTwoTone,
+  CheckCircleFilled,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UnorderedListOutlined,
@@ -1060,7 +1060,7 @@ const NotesLibrary: React.FC = () => {
             <span className="nav-tree-name">{cat.name}</span>
             <Tag
               color={cat.percent === 100 ? 'success' : 'default'}
-              style={{ marginInlineEnd: 0, fontSize: 11 }}
+              className="nav-progress-tag"
             >
               {cat.done}/{cat.total}
             </Tag>
@@ -1089,11 +1089,7 @@ const NotesLibrary: React.FC = () => {
                   onChange={(e) => toggleProgress(item, e)}
                 />
                 <span
-                  className="nav-item-name"
-                  style={{
-                    textDecoration: isCompleted ? 'line-through' : 'none',
-                    color: isCompleted ? '#999' : 'inherit',
-                  }}
+                  className={`nav-item-name${isCompleted ? ' nav-item-name--completed' : ''}`}
                   title={itemName}
                 >
                   {itemName}
@@ -1165,7 +1161,7 @@ const NotesLibrary: React.FC = () => {
         allowClear
         size="small"
         prefix={<SearchOutlined />}
-        style={{ marginBottom: 8 }}
+        className="notes-nav-search"
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
       />
@@ -1316,7 +1312,7 @@ const NotesLibrary: React.FC = () => {
                           {activeItem.name.replace(/\.md$/, '')}
                         </span>
                         {progress[activeItem.path] && (
-                          <CheckCircleTwoTone twoToneColor="#52c41a" />
+                          <CheckCircleFilled className="article-complete-icon" />
                         )}
                       </Space>
                       <Space size={6}>
@@ -1399,6 +1395,7 @@ const NotesLibrary: React.FC = () => {
                       </>
                     )}
                   </div>
+                  {/* WHY：标注工具条位置来自用户实时选区坐标，无法用固定 CSS class 表达。 */}
                   {annotationToolbar && !mdLoading && (
                     <div
                       className="annotation-toolbar"

@@ -1,226 +1,255 @@
-.dashboard-container {
-  padding: 12px;
-  background-color: #f0f2f5;
-  min-height: 100vh;
-}
-
+/* 概览页：将滚动限定在工作区内，保持全局顶栏稳定。 */
 .dashboard-page {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
   min-height: 0;
+  padding: 0 8px 16px;
+  overflow-y: auto;
 }
 
 .compact-page-head {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 28px;
+  gap: 24px;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid rgb(var(--vl-border));
 }
 
-.compact-page-title {
-  margin: 0 !important;
-  line-height: 1.2 !important;
+.compact-page-title.ant-typography {
+  margin: 0;
+  color: rgb(var(--vl-text));
+  font-size: 20px;
+  line-height: 1.35;
 }
 
-.compact-page-subtitle {
+/* 页面标题图标：略小于标题文字，保持视觉中线且不抢夺标题层级。 */
+.compact-page-title .anticon {
+  font-size: 18px;
+}
+
+.compact-page-subtitle.ant-typography {
+  max-width: min(52vw, 720px);
   overflow: hidden;
+  color: rgb(var(--vl-text-muted));
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
 }
 
-.compact-section-card {
-  margin-top: 0;
+/* 统计概要：单一面板内用分隔线建立密集而易扫描的指标带。 */
+.dashboard-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid rgb(var(--vl-border));
+  border-radius: 6px;
+  background: rgb(var(--vl-panel));
 }
 
-.dashboard-title {
-  font-size: 22px;
+.dashboard-summary__item {
+  min-width: 0;
+  padding: 16px 24px;
+}
+
+.dashboard-summary__item + .dashboard-summary__item {
+  border-left: 1px solid rgb(var(--vl-border));
+}
+
+.dashboard-summary__item--success .ant-statistic-content {
+  color: rgb(var(--vl-success));
+}
+
+/* 主工作区：总进度和学科列表并排，使数据量较少时不产生大片横向空白。 */
+.dashboard-workspace {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.overall-progress-panel,
+.subject-progress-panel {
+  min-width: 0;
+  border: 1px solid rgb(var(--vl-border));
+  border-radius: 6px;
+  background: rgb(var(--vl-panel));
+}
+
+.overall-progress-panel {
+  padding: 16px;
+}
+
+.dashboard-section-label {
+  margin-bottom: 16px;
+  color: rgb(var(--vl-text));
+  font-size: 14px;
   font-weight: 600;
-  color: #262626;
-  margin-bottom: 12px;
 }
 
-/* 统计卡片：hover 上浮 */
-.stat-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
-}
-
-/* 总体进度区：圆环 + 文字水平居中排列 */
 .overall-progress-wrap {
   display: flex;
   align-items: center;
+  flex-direction: row;
   justify-content: center;
-  gap: 20px;
+  gap: 16px;
 }
 
-/* 总体进度文字区：竖排 */
 .overall-progress-text {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
-/* 学科圆形进度卡片：居中排列，可点击，hover 上浮 */
-.subject-card.ant-btn {
+.overall-progress-caption {
+  color: rgb(var(--vl-text-muted));
+  font-size: 12px;
+}
+
+.overall-progress-caption strong {
+  color: rgb(var(--vl-text));
+  font-weight: 600;
+}
+
+.overall-progress-caption .overall-progress-completed--success {
+  color: rgb(var(--vl-success));
+}
+
+.subject-group + .subject-group {
+  border-top: 1px solid rgb(var(--vl-border));
+}
+
+.subject-group__header {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgb(var(--vl-border));
+}
+
+.subject-group__title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  color: rgb(var(--vl-text));
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.subject-group__icon {
+  color: rgb(var(--vl-accent));
+}
+
+.subject-group__summary {
+  flex: 0 0 auto;
+  color: rgb(var(--vl-text-muted));
+  font-size: 12px;
+}
+
+.subject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+/* 学科项：使用线性进度和文本数值，便于多学科横向比较。 */
+.subject-card.ant-btn {
   width: 100%;
   height: auto;
-  min-height: 110px;
-  padding: 0;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  min-height: 88px;
+  padding: 12px;
+  border: 1px solid rgb(var(--vl-border));
+  border-radius: 6px;
+  background: rgb(var(--vl-panel-subtle));
+  text-align: left;
 }
 
 .subject-card.ant-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-  /* 用半透明色：深色/浅色主题下都自然融合 */
-  border-color: rgba(24, 144, 255, 0.35);
-  background: rgba(24, 144, 255, 0.07);
+  border-color: rgb(var(--vl-accent) / 0.52);
+  background: rgb(var(--vl-accent) / 0.08);
 }
 
-/* 100% 完成的学科卡片：绿色边框高亮 */
 .subject-card--done.ant-btn {
-  border-color: rgba(82, 196, 26, 0.35);
-  background: rgba(82, 196, 26, 0.06);
+  border-color: rgb(var(--vl-success) / 0.34);
+  background: rgb(var(--vl-success) / 0.07);
 }
 
-.subject-card--done.ant-btn:hover {
-  border-color: rgba(82, 196, 26, 0.5);
-  background: rgba(82, 196, 26, 0.1);
-  box-shadow: 0 6px 20px rgba(82, 196, 26, 0.15);
-}
-
-/* antd Button 内部内容：竖排承载圆形进度、学科名和篇数。 */
 .subject-card-content {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 4px;
   width: 100%;
-  padding: 8px 6px;
+  gap: 8px 12px;
 }
 
-/* 学科名称文字：固定最大宽度，超出省略；不设色让主题自动继承 */
-.subject-name {
-  font-size: 12px;
-  font-weight: 500;
-  max-width: 90px;
-  text-align: center;
-  display: block;
-}
-
-/* 100% 完成时叠加在圆环中心的对号图标 */
-.subject-done-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 22px;
-  color: #52c41a;
-  pointer-events: none;  /* 不遮挡点击事件 */
-}
-
-/* 热力图样式（保留原有） */
-.heatmap-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.heatmap-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 0;
-}
-
-.heatmap-grid {
-  display: flex;
-  gap: 3px;
-  overflow-x: auto;
-  padding: 8px;
-}
-
-.heatmap-week {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.heatmap-cell {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.heatmap-cell:hover {
-  transform: scale(1.3);
-  outline: 2px solid rgba(0, 0, 0, 0.3);
-}
-
-.heatmap-legend {
+.subject-card__topline {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  min-width: 0;
   gap: 8px;
-  margin-top: 16px;
-  font-size: 12px;
-  color: #8c8c8c;
+  grid-column: 1 / -1;
 }
 
-.legend-colors {
-  display: flex;
-  gap: 3px;
+.subject-name.ant-typography {
+  min-width: 0;
+  color: rgb(var(--vl-text));
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.legend-cell {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+.subject-card__count,
+.subject-card__status {
+  color: rgb(var(--vl-text-muted));
+  font-size: 11px;
 }
 
-/* 响应式：小屏适配 */
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 10px;
+.subject-card__progress.ant-progress {
+  min-width: 0;
+  line-height: 1;
+}
+
+.subject-done-icon {
+  color: rgb(var(--vl-success));
+  font-size: 16px;
+}
+
+.dashboard-empty {
+  padding: 32px;
+}
+
+@media (max-width: 1040px) {
+  .dashboard-workspace {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   }
 
-  .dashboard-title {
-    font-size: 20px;
+  .dashboard-summary__item {
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 800px) {
+  .dashboard-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .compact-page-head {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
+  .dashboard-summary__item:nth-child(3) {
+    border-left: 0;
   }
 
-  .heatmap-cell {
-    width: 10px;
-    height: 10px;
+  .dashboard-summary__item:nth-child(n + 3) {
+    border-top: 1px solid rgb(var(--vl-border));
   }
 
-  .heatmap-grid {
-    gap: 2px;
-  }
-
-  .heatmap-week {
-    gap: 2px;
-  }
-
-  .overall-progress-wrap {
-    flex-direction: column;
-    text-align: center;
+  .dashboard-workspace {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

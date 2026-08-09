@@ -7,10 +7,14 @@ import { buildCspPolicy } from './security.js'
 
 // __dirname 存储当前 Electron 入口文件所在目录。
 const __dirname = dirname(fileURLToPath(import.meta.url))
+// DEVELOPMENT_APP_ICON_PATH 存储开发态窗口和 macOS Dock 使用的高清项目图标路径。
+const DEVELOPMENT_APP_ICON_PATH = join(__dirname, '../build/icon.png')
 // isDev 标记当前是否开发环境。
 const isDev = process.env.NODE_ENV === 'development'
 // isSmoke 标记当前是否 Electron 启动冒烟自检模式。
 const isSmoke = process.env.VL_SMOKE === '1'
+// isE2E 标记当前是否执行需要隐藏窗口的 Playwright Electron 测试。
+const isE2E = process.env.VL_E2E === '1'
 // mainWindow 存储主窗口引用，避免被垃圾回收。
 let mainWindow = null
 
@@ -36,9 +40,11 @@ function createWindow() {
     height: 820,
     minWidth: 960,
     minHeight: 640,
-    show: !isSmoke,
+    // 自动化测试保留真实渲染能力但不显示窗口，避免抢占用户桌面焦点。
+    show: !isSmoke && !isE2E,
     title: '学习进度追踪器',
     backgroundColor: '#141414',
+    icon: app.isPackaged ? undefined : DEVELOPMENT_APP_ICON_PATH,
     webPreferences: {
       preload: join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -120,6 +126,12 @@ const appUpdater = await loadAutoUpdater(
 registerAppUpdater(ipcMain, appUpdater, app.isPackaged)
 
 app.whenReady().then(() => {
+  // macOS E2E 隐藏 Dock 图标，避免后台测试切换用户当前操作的前台应用。
+  if (isE2E) app.dock?.hide()
+  // Bug 修复：未打包 Electron 默认显示框架图标；开发态显式设置项目图标，打包态继续使用安装包资源。
+  if (process.platform === 'darwin' && !app.isPackaged && !isE2E) {
+    app.dock?.setIcon(DEVELOPMENT_APP_ICON_PATH)
+  }
   setupCSP()
   // win 存储新创建的主窗口。
   const win = createWindow()

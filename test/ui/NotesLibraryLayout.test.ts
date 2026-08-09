@@ -12,9 +12,11 @@ describe('NotesLibrary 左侧目录布局', () => {
     // css 存储学习资料页样式文本，便于校验关键布局约束。
     const css = readFileSync(cssPath, 'utf8')
 
-    expect(css).toContain('width: clamp(320px, 28vw, 420px)')
+    expect(css).toContain('width: clamp(264px, 24vw, 320px)')
     expect(css).toMatch(/\.nav-item-name\s*\{[\s\S]*white-space: normal/)
-    expect(css).toMatch(/\.notes-nav-tree \.ant-tree-indent-unit\s*\{[\s\S]*width: 10px/)
+    expect(css).toMatch(
+      /\.notes-nav-tree \.ant-tree-indent-unit\s*\{[\s\S]*width: 10px/
+    )
   })
 
   /**
@@ -28,9 +30,11 @@ describe('NotesLibrary 左侧目录布局', () => {
     // itemRule 存储学习项行容器的 CSS 规则块。
     const itemRule = css.match(/\.nav-tree-title--item\s*\{[^}]*\}/)?.[0] || ''
     // summaryIconRule 存储文章总结标识的 CSS 规则块。
-    const summaryIconRule = css.match(/\.nav-item-summary-icon\s*\{[^}]*\}/)?.[0] || ''
+    const summaryIconRule =
+      css.match(/\.nav-item-summary-icon\s*\{[^}]*\}/)?.[0] || ''
     // demoButtonRule 存储打开代码按钮的 CSS 规则块。
-    const demoButtonRule = css.match(/\.nav-item-demo\.ant-btn\s*\{[^}]*\}/)?.[0] || ''
+    const demoButtonRule =
+      css.match(/\.nav-item-demo\.ant-btn\s*\{[^}]*\}/)?.[0] || ''
 
     expect(itemRule).toContain('align-items: center')
     expect(summaryIconRule).toContain('display: inline-flex')
@@ -66,10 +70,14 @@ describe('NotesLibrary 左侧目录布局', () => {
     // css 存储学习资料页样式文本，便于校验标注视觉约束。
     const css = readFileSync(cssPath, 'utf8')
 
-    expect(css).toMatch(/\.annotation-highlight\s*\{[\s\S]*background: rgba\(255, 249, 226, 0\.78\)/)
-    expect(css).toMatch(/\.annotation-highlight\s*\{[\s\S]*border-bottom: 1px solid rgba\(202, 138, 4, 0\.32\)/)
+    expect(css).toMatch(
+      /\.annotation-highlight\s*\{[\s\S]*background: rgb\(var\(--vl-mark-bg\) \/ 0\.78\)/
+    )
+    expect(css).toMatch(
+      /\.annotation-highlight\s*\{[\s\S]*border-bottom: 1px solid rgb\(var\(--vl-mark-border\) \/ 0\.32\)/
+    )
     expect(css).toMatch(/\.annotation-highlight\s*\{[\s\S]*box-shadow: none/)
-    expect(css).toMatch(/\.annotation-toolbar\s*\{[\s\S]*border-radius: 10px/)
+    expect(css).toMatch(/\.annotation-toolbar\s*\{[\s\S]*border-radius: 6px/)
     expect(css).not.toMatch(/\.annotation-highlight\s*\{[\s\S]*inset 0 -0\./)
   })
 })

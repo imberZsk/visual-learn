@@ -1,7 +1,13 @@
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { _electron as electron, test, type Page } from '@playwright/test'
+import {
+  _electron as electron,
+  test,
+  type ElectronApplication,
+  type Page,
+  type TestInfo,
+} from '@playwright/test'
 
 /** prepareHome 创建包含真实 Markdown 与隔离持久化数据的临时用户目录。 */
 async function prepareHome(seed: Record<string, unknown> = {}) {
@@ -64,22 +70,31 @@ export function learnTest(
   seed: Record<string, unknown>,
   body: (
     page: Page,
-    paths: Awaited<ReturnType<typeof prepareHome>>
+    paths: Awaited<ReturnType<typeof prepareHome>>,
+    testInfo: TestInfo,
+    app: ElectronApplication
   ) => Promise<void>
 ) {
-  test(name, async () => {
+  test(name, async ({ browserName }, testInfo) => {
+    // Electron 仅使用 Chromium 渲染，阻止测试配置误扩展到其他浏览器。
+    test.skip(browserName !== 'chromium', 'Electron E2E 仅支持 Chromium')
     // paths 存储当前用例临时路径集合。
     const paths = await prepareHome(seed)
     // app 存储当前用例真实 Electron 进程。
     const app = await electron.launch({
       args: ['.'],
-      env: { ...process.env, HOME: paths.homePath, NODE_ENV: 'production' },
+      env: {
+        ...process.env,
+        HOME: paths.homePath,
+        NODE_ENV: 'production',
+        VL_E2E: '1',
+      },
     })
     try {
       // page 存储 Electron 主窗口。
       const page = await app.firstWindow()
-      await page.getByText('学习追踪', { exact: true }).waitFor()
-      await body(page, paths)
+      await page.getByText('Visual Learn', { exact: true }).waitFor()
+      await body(page, paths, testInfo, app)
     } finally {
       await app.close()
       await rm(paths.homePath, { recursive: true, force: true })

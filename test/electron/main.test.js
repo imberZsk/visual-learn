@@ -99,7 +99,7 @@ vi.mock('../../electron/ipcHandlers.js', () => ({
 
 /**
  * 重置 electron mock 状态并按给定环境重新导入 main.js。
- * @param {{isDev?: boolean, isSmoke?: boolean}} env - 控制开发/冒烟模式的环境。
+ * @param {{isDev?: boolean, isSmoke?: boolean, isE2E?: boolean}} env - 控制开发、冒烟和 E2E 模式的环境。
  * @returns {Promise<void>} 导入完成后 resolve。
  */
 async function loadMain(env = {}) {
@@ -119,6 +119,11 @@ async function loadMain(env = {}) {
     process.env.VL_SMOKE = '1'
   } else {
     delete process.env.VL_SMOKE
+  }
+  if (env.isE2E) {
+    process.env.VL_E2E = '1'
+  } else {
+    delete process.env.VL_E2E
   }
 
   vi.resetModules()
@@ -168,6 +173,17 @@ describe('electron/main 生命周期', () => {
       ][0]
     expect(csp).toContain("script-src 'self'")
     expect(csp).not.toContain('unsafe-eval')
+  })
+
+  /**
+   * 验证 E2E 使用真实渲染进程时不会显示窗口抢占桌面焦点。
+   */
+  test('E2E 模式创建隐藏窗口', async () => {
+    await loadMain({ isE2E: true })
+    electronState.whenReadyResolve()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(electronState.windowOptions.show).toBe(false)
   })
 
   /**

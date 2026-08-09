@@ -7,9 +7,13 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import './index.css'
 import './theme-dark.css'
 
+// APP_FONT_FAMILY 存储三个桌面工作台共用的系统字体栈，确保 Ant Design 控件与业务文本一致。
+const APP_FONT_FAMILY =
+  '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif'
+
 /**
  * 主题化的 ConfigProvider 包装：根据当前主题模式动态选用
- * antd 的深色 / 浅色算法，并微调深色下 Layout 各容器的背景层级
+ * antd 的深色 / 浅色算法，并与项目语义 CSS 变量保持一致
  */
 const ThemedApp: React.FC = () => {
   // 读取当前主题模式
@@ -22,19 +26,22 @@ const ThemedApp: React.FC = () => {
       locale={zhCN}
       theme={{
         // 深色模式用 darkAlgorithm，浅色用默认算法
-        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        algorithm: isDark
+          ? antdTheme.darkAlgorithm
+          : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#1890ff',
+          colorPrimary: '#1677ff',
+          borderRadius: 6,
+          controlHeight: 32,
+          fontFamily: APP_FONT_FAMILY,
         },
         components: {
-          // 深色下让 Layout 各容器使用统一的暗背景，避免纯黑
-          Layout: isDark
-            ? {
-                bodyBg: '#141414',
-                headerBg: '#1f1f1f',
-                siderBg: '#1f1f1f',
-              }
-            : {},
+          // Layout 容器与页面语义背景同步，避免 CSS 和 CSS-in-JS 之间出现色彩断层。
+          Layout: {
+            bodyBg: isDark ? '#000000' : '#f5f5f5',
+            headerBg: isDark ? '#141414' : '#ffffff',
+            siderBg: isDark ? '#141414' : '#ffffff',
+          },
         },
       }}
     >
@@ -51,5 +58,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <ThemedApp />
     </ThemeProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 )

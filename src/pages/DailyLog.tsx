@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react'
 import {
   App as AntdApp,
   Card,
@@ -13,38 +13,38 @@ import {
   Space,
   Divider,
   Empty,
-} from 'antd';
+} from 'antd'
 import {
   PlusOutlined,
   ClockCircleOutlined,
   BookOutlined,
   DeleteOutlined,
   EditOutlined,
-} from '@ant-design/icons';
-import dayjs, { Dayjs } from 'dayjs';
-import './DailyLog.css';
+} from '@ant-design/icons'
+import dayjs, { Dayjs } from 'dayjs'
+import './DailyLog.css'
 
-const { TextArea } = Input;
-const { Option } = Select;
+const { TextArea } = Input
+const { Option } = Select
 
 /**
  * 每日学习记录数据结构
  */
 interface LogEntry {
   // 记录唯一ID
-  id: string;
+  id: string
   // 学习日期
-  date: string;
+  date: string
   // 学习科目
-  subject: string;
+  subject: string
   // 学习时长（小时）
-  duration: number;
+  duration: number
   // 学习内容描述
-  content: string;
+  content: string
   // 标签列表
-  tags: string[];
+  tags: string[]
   // 创建时间戳
-  createdAt: number;
+  createdAt: number
 }
 
 /**
@@ -52,15 +52,15 @@ interface LogEntry {
  */
 interface LogFormValues {
   // 学习日期（Dayjs 对象）
-  date: Dayjs;
+  date: Dayjs
   // 学习科目
-  subject: string;
+  subject: string
   // 学习时长（小时）
-  duration: number;
+  duration: number
   // 学习内容
-  content: string;
+  content: string
   // 标签
-  tags: string[];
+  tags: string[]
 }
 
 /**
@@ -69,9 +69,9 @@ interface LogFormValues {
  */
 const DailyLog: React.FC = () => {
   // message 存储 antd App 上下文消息 API，确保提示跟随当前主题。
-  const { message } = AntdApp.useApp();
+  const { message } = AntdApp.useApp()
   // 表单实例
-  const [form] = Form.useForm<LogFormValues>();
+  const [form] = Form.useForm<LogFormValues>()
 
   // 学习记录列表状态（模拟数据，实际应从后端或本地存储获取）
   const [logs, setLogs] = useState<LogEntry[]>([
@@ -93,13 +93,20 @@ const DailyLog: React.FC = () => {
       tags: ['算法', '动态规划'],
       createdAt: Date.now() - 172800000,
     },
-  ]);
+  ])
 
   // 编辑模式状态：当前正在编辑的记录ID，null 表示新增模式
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   // 学科选项（可根据实际需求扩展）
-  const subjectOptions = ['前端开发', '后端开发', '算法', '系统设计', '英语', '其他'];
+  const subjectOptions = [
+    '前端开发',
+    '后端开发',
+    '算法',
+    '系统设计',
+    '英语',
+    '其他',
+  ]
 
   // 常用标签选项
   const tagOptions = [
@@ -112,14 +119,14 @@ const DailyLog: React.FC = () => {
     '设计模式',
     '阅读',
     '实战',
-  ];
+  ]
 
   /**
    * 按日期降序排序记录列表
    */
   const sortedLogs = useMemo(() => {
-    return [...logs].sort((a, b) => b.createdAt - a.createdAt);
-  }, [logs]);
+    return [...logs].sort((a, b) => b.createdAt - a.createdAt)
+  }, [logs])
 
   /**
    * 提交表单处理函数
@@ -136,74 +143,76 @@ const DailyLog: React.FC = () => {
       createdAt: editingId
         ? logs.find((log) => log.id === editingId)?.createdAt || Date.now()
         : Date.now(),
-    };
+    }
 
     if (editingId) {
       // 编辑模式：更新现有记录
-      setLogs((prev) => prev.map((log) => (log.id === editingId ? logEntry : log)));
-      message.success('记录更新成功');
-      setEditingId(null);
+      setLogs((prev) =>
+        prev.map((log) => (log.id === editingId ? logEntry : log))
+      )
+      message.success('记录更新成功')
+      setEditingId(null)
     } else {
       // 新增模式：添加新记录
-      setLogs((prev) => [logEntry, ...prev]);
-      message.success('记录添加成功');
+      setLogs((prev) => [logEntry, ...prev])
+      message.success('记录添加成功')
     }
 
     // 重置表单
-    form.resetFields();
+    form.resetFields()
     form.setFieldsValue({
       date: dayjs(),
       duration: 1,
-    });
-  };
+    })
+  }
 
   /**
    * 删除记录
    * @param id - 记录ID
    */
   const handleDelete = (id: string) => {
-    setLogs((prev) => prev.filter((log) => log.id !== id));
-    message.success('记录已删除');
+    setLogs((prev) => prev.filter((log) => log.id !== id))
+    message.success('记录已删除')
 
     // 如果正在编辑该记录，取消编辑模式
     if (editingId === id) {
-      setEditingId(null);
-      form.resetFields();
+      setEditingId(null)
+      form.resetFields()
       form.setFieldsValue({
         date: dayjs(),
         duration: 1,
-      });
+      })
     }
-  };
+  }
 
   /**
    * 编辑记录：加载记录数据到表单
    * @param log - 要编辑的记录
    */
   const handleEdit = (log: LogEntry) => {
-    setEditingId(log.id);
+    setEditingId(log.id)
     form.setFieldsValue({
       date: dayjs(log.date),
       subject: log.subject,
       duration: log.duration,
       content: log.content,
       tags: log.tags,
-    });
+    })
     // 滚动到表单顶部
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   /**
    * 取消编辑
    */
   const handleCancelEdit = () => {
-    setEditingId(null);
-    form.resetFields();
+    setEditingId(null)
+    form.resetFields()
     form.setFieldsValue({
       date: dayjs(),
       duration: 1,
-    });
-  };
+    })
+  }
 
   /**
    * 根据科目返回对应颜色
@@ -217,9 +226,9 @@ const DailyLog: React.FC = () => {
       系统设计: 'purple',
       英语: 'cyan',
       其他: 'default',
-    };
-    return colorMap[subject] || 'default';
-  };
+    }
+    return colorMap[subject] || 'default'
+  }
 
   return (
     <div className="daily-log-container">
@@ -251,7 +260,7 @@ const DailyLog: React.FC = () => {
             name="date"
             rules={[{ required: true, message: '请选择学习日期' }]}
           >
-            <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
+            <DatePicker className="log-form-control" format="YYYY-MM-DD" />
           </Form.Item>
 
           <Form.Item
@@ -277,7 +286,7 @@ const DailyLog: React.FC = () => {
             ]}
           >
             <InputNumber
-              style={{ width: '100%' }}
+              className="log-form-control"
               min={0.1}
               max={24}
               step={0.5}
@@ -358,10 +367,15 @@ const DailyLog: React.FC = () => {
                 <List.Item.Meta
                   title={
                     <Space>
-                      <Tag color={getSubjectColor(log.subject)} icon={<BookOutlined />}>
+                      <Tag
+                        color={getSubjectColor(log.subject)}
+                        icon={<BookOutlined />}
+                      >
                         {log.subject}
                       </Tag>
-                      <Tag icon={<ClockCircleOutlined />}>{log.duration} 小时</Tag>
+                      <Tag icon={<ClockCircleOutlined />}>
+                        {log.duration} 小时
+                      </Tag>
                       <span className="log-date">{log.date}</span>
                     </Space>
                   }
@@ -386,7 +400,7 @@ const DailyLog: React.FC = () => {
         )}
       </Card>
     </div>
-  );
-};
+  )
+}
 
-export default DailyLog;
+export default DailyLog

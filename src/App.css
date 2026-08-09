@@ -1,48 +1,50 @@
-/* App 全局样式 */
-
+/* 应用外壳：视口内固定头部，滚动交给具体工作区。 */
 #root {
   width: 100%;
   height: 100%;
 }
 
-/* 卡片样式优化 */
-.ant-card {
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+.app-shell.ant-layout {
+  height: 100vh;
+  background: rgb(var(--vl-bg));
 }
 
-/* 主内容区：工作台式紧凑留白，给内容更多可用空间 */
-.app-content {
-  margin: 12px;
-  padding: 12px;
-  min-height: calc(100vh - 96px);
+.app-content.ant-layout-content {
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
   overflow: hidden;
+  background: rgb(var(--vl-bg));
 }
 
-/* Ant Design 卡片默认留白偏大，这里统一收紧页面密度 */
-.app-content .ant-card-head {
+/* 共享 Ant Design 密度：保持工具型界面紧凑，不为单个页面重复覆盖。 */
+.app-shell .ant-card {
+  border-color: rgb(var(--vl-border));
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.app-shell .ant-card-head {
   min-height: 40px;
-  padding: 0 14px;
+  padding: 0 16px;
 }
 
-.app-content .ant-card-head-title {
-  padding: 10px 0;
+.app-shell .ant-card-head-title {
+  padding: 12px 0;
 }
 
-.app-content .ant-card-body {
-  padding: 14px;
+.app-shell .ant-card-body {
+  padding: 16px;
 }
 
-.app-content .ant-menu-item {
-  height: 38px;
-  line-height: 38px;
-  margin-block: 2px;
+.app-shell .ant-btn,
+.settings-drawer .ant-btn {
+  border-radius: 6px;
 }
 
-/* 统计卡片标题字号（颜色交由 antd 主题算法控制） */
 .ant-statistic-title {
+  margin-bottom: 4px;
   font-size: 12px;
-  margin-bottom: 2px;
 }
 
 .ant-statistic-content {
@@ -50,28 +52,27 @@
   font-weight: 600;
 }
 
-/* 进度条样式 */
 .ant-progress-outer {
   margin-right: 0;
   padding-right: 0;
 }
 
-/* 统一加载状态：参考 visual-worktree 的整屏居中 Spin，避免卡片 skeleton 与页面转圈混用 */
+/* 统一加载状态：使用稳定的中心区域，避免异步内容导致布局跳动。 */
 .loading-state {
-  min-height: calc(100vh - 96px);
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 10px;
+  min-height: 320px;
+  gap: 8px;
 }
 
-/* 局部加载状态：用于阅读正文等固定区域，不撑满整页 */
 .loading-state--compact {
-  min-height: 220px;
+  min-height: 224px;
 }
 
-/* 加载提示文案保持低噪音 */
 .loading-state-tip {
-  font-size: 13px;
+  color: rgb(var(--vl-text-muted));
+  font-size: 12px;
 }

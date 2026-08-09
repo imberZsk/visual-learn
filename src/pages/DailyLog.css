@@ -1,46 +1,50 @@
 .daily-log-container {
   padding: 0;
-  background-color: #f0f2f5;
+  background: rgb(var(--vl-bg));
   min-height: 0;
 }
 
 .page-title {
   font-size: 20px;
   font-weight: 600;
-  color: #262626;
+  color: rgb(var(--vl-text));
   margin-bottom: 12px;
 }
 
 .log-form-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: rgb(var(--vl-border));
+  border-radius: 6px;
   margin-bottom: 12px;
 }
 
 .log-list-card {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: rgb(var(--vl-border));
+  border-radius: 6px;
+}
+
+.log-form-control {
+  width: 100%;
 }
 
 .log-list-item {
   padding: 10px 14px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #f0f0f0;
+  background: rgb(var(--vl-panel));
+  border-bottom: 1px solid rgb(var(--vl-border));
   transition: background-color 0.3s ease;
 }
 
 .log-list-item:hover {
-  background-color: #fafafa;
+  background: rgb(var(--vl-panel-hover));
 }
 
 .log-date {
-  color: #8c8c8c;
+  color: rgb(var(--vl-text-muted));
   font-size: 14px;
 }
 
 .log-content {
   margin: 6px 0;
-  color: #595959;
+  color: rgb(var(--vl-text-muted));
   line-height: 1.6;
 }
 

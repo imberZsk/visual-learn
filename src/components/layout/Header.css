@@ -1,0 +1,100 @@
+/* 应用顶栏：固定 56px 高度，为品牌、主导航和全局操作提供稳定对齐。 */
+.app-header.ant-layout-header {
+  display: flex;
+  flex: 0 0 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  height: 56px;
+  min-height: 56px;
+  padding: 0 24px;
+  border-bottom: 1px solid rgb(var(--vl-border));
+  background: rgb(var(--vl-header));
+  line-height: normal;
+}
+
+.app-header__primary,
+.app-brand,
+.app-header__actions {
+  display: flex;
+  align-items: center;
+}
+
+.app-header__primary {
+  min-width: 0;
+  gap: 24px;
+}
+
+.app-brand {
+  flex: 0 0 auto;
+}
+
+.app-brand__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-brand__name.ant-typography {
+  color: rgb(var(--vl-text));
+  font-size: 14px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.app-brand__subtitle {
+  color: rgb(var(--vl-text-muted));
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
+/* 主导航：使用轻量 Segmented，选中态只使用强调色文字和柔和底色。 */
+.app-primary-nav.ant-segmented {
+  padding: 2px;
+  border: 1px solid rgb(var(--vl-border));
+  border-radius: 6px;
+  background: rgb(var(--vl-panel-subtle));
+}
+
+.app-primary-nav .ant-segmented-item {
+  min-height: 30px;
+  border-radius: 4px;
+}
+
+.app-primary-nav .ant-segmented-item-selected {
+  color: rgb(var(--vl-accent));
+  background: rgb(var(--vl-panel));
+  box-shadow: none;
+}
+
+.app-header__actions {
+  flex: 0 0 auto;
+}
+
+.app-header__date.ant-typography {
+  color: rgb(var(--vl-text-muted));
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.app-header__icon-button.ant-btn {
+  color: rgb(var(--vl-text-muted));
+  font-size: 16px;
+}
+
+.app-header__icon-button.ant-btn:hover {
+  color: rgb(var(--vl-accent));
+  background: rgb(var(--vl-accent) / 0.1);
+}
+
+.settings-drawer .ant-drawer-body {
+  padding: 24px;
+}
+
+@media (max-width: 1040px) {
+  .app-brand__subtitle,
+  .app-header__date {
+    display: none;
+  }
+}

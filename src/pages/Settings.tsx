@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import {
-  App as AntdApp,
-  Card,
-  Typography,
-  Space,
-  Button,
-  Input,
-  Divider,
-} from 'antd'
+import { App as AntdApp, Space, Button, Input } from 'antd'
 import {
   FolderOutlined,
   CodeOutlined,
@@ -15,9 +7,8 @@ import {
   ReadOutlined,
 } from '@ant-design/icons'
 import { appApi } from '../api'
+import packageInfo from '../../package.json'
 import './Settings.css'
-
-const { Text } = Typography
 
 // PathField 标识当前正在打开目录选择器的配置项。
 type PathField = 'study' | 'vscode'
@@ -112,86 +103,115 @@ const Settings: React.FC = () => {
 
   return (
     <div className="settings-container">
-      <Card title="学习目录" className="settings-card">
-        <Space orientation="vertical" style={{ width: '100%' }} size="small">
-          <Text type="secondary">
-            应用会扫描文章内容目录下的 chapter.md 和普通 .md 文档； 文章旁的 lab
+      <section
+        className="settings-section"
+        aria-labelledby="learning-directory-title"
+      >
+        <div className="settings-section__header">
+          <h2 id="learning-directory-title">学习目录</h2>
+          <p>
+            应用会扫描文章内容目录下的 chapter.md 和普通 .md 文档；文章旁的 lab
             或 demo 目录会作为“打开代码”的目标。
-          </Text>
+          </p>
+        </div>
 
-          <Divider style={{ margin: '4px 0' }} />
+        <div className="settings-field-list">
+          <div className="settings-field">
+            <label htmlFor="settings-study-path">文章内容目录</label>
+            <Space.Compact className="settings-path-control">
+              <Input
+                id="settings-study-path"
+                value={studyPath}
+                onChange={(e) => setStudyPath(e.target.value)}
+                placeholder="请输入或选择文章内容目录路径"
+                title={studyPath}
+              />
+              <Button
+                icon={<FolderOutlined />}
+                loading={pickingPathField === 'study'}
+                onClick={() =>
+                  handleSelectDir('study', setStudyPath, studyPath)
+                }
+              >
+                选择目录
+              </Button>
+            </Space.Compact>
+          </div>
 
-          <Text strong>文章内容目录</Text>
-          <Space.Compact style={{ width: '100%' }}>
-            <Input
-              value={studyPath}
-              onChange={(e) => setStudyPath(e.target.value)}
-              placeholder="请输入或选择文章内容目录路径"
-            />
-            <Button
-              icon={<FolderOutlined />}
-              loading={pickingPathField === 'study'}
-              onClick={() => handleSelectDir('study', setStudyPath, studyPath)}
-            >
-              选择目录
-            </Button>
-          </Space.Compact>
+          <div className="settings-field">
+            <label htmlFor="settings-vscode-path">VSCode 打开目录</label>
+            <Space.Compact className="settings-path-control">
+              <Input
+                id="settings-vscode-path"
+                value={vscodePath}
+                onChange={(e) => setVscodePath(e.target.value)}
+                placeholder="请输入或选择 VSCode 打开目录路径"
+                title={vscodePath}
+              />
+              <Button
+                icon={<FolderOutlined />}
+                loading={pickingPathField === 'vscode'}
+                onClick={() =>
+                  handleSelectDir('vscode', setVscodePath, vscodePath)
+                }
+              >
+                选择目录
+              </Button>
+            </Space.Compact>
+          </div>
+        </div>
 
-          <Text strong>VSCode 打开目录</Text>
-          <Space.Compact style={{ width: '100%' }}>
-            <Input
-              value={vscodePath}
-              onChange={(e) => setVscodePath(e.target.value)}
-              placeholder="请输入或选择 VSCode 打开目录路径"
-            />
-            <Button
-              icon={<FolderOutlined />}
-              loading={pickingPathField === 'vscode'}
-              onClick={() =>
-                handleSelectDir('vscode', setVscodePath, vscodePath)
-              }
-            >
-              选择目录
-            </Button>
-          </Space.Compact>
+        {/* 保存与 VSCode 操作按钮 */}
+        <div className="settings-actions">
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            onClick={handleSave}
+            loading={saving}
+          >
+            保存
+          </Button>
+          <Button
+            icon={<ReadOutlined />}
+            onClick={() =>
+              handleOpenInVSCode(studyPath, '已用 VSCode 打开文章目录')
+            }
+          >
+            打开文章目录
+          </Button>
+          <Button
+            icon={<CodeOutlined />}
+            onClick={() =>
+              handleOpenInVSCode(vscodePath, '已用 VSCode 打开配置目录')
+            }
+          >
+            打开 VSCode 目录
+          </Button>
+        </div>
+      </section>
 
-          {/* 保存与 VSCode 操作按钮 */}
-          <Space wrap>
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={handleSave}
-              loading={saving}
-            >
-              保存
-            </Button>
-            <Button
-              icon={<ReadOutlined />}
-              onClick={() =>
-                handleOpenInVSCode(studyPath, '已用 VSCode 打开文章目录')
-              }
-            >
-              打开文章目录
-            </Button>
-            <Button
-              icon={<CodeOutlined />}
-              onClick={() =>
-                handleOpenInVSCode(vscodePath, '已用 VSCode 打开配置目录')
-              }
-            >
-              打开 VSCode 目录
-            </Button>
-          </Space>
-        </Space>
-      </Card>
-
-      <Card title="应用信息" className="settings-card">
-        <Space orientation="vertical" size="small">
-          <Text>应用名称: 学习进度追踪器</Text>
-          <Text>版本: 0.0.1</Text>
-          <Text>技术栈: Electron + React + TypeScript</Text>
-        </Space>
-      </Card>
+      <section
+        className="settings-section"
+        aria-labelledby="application-info-title"
+      >
+        <div className="settings-section__header settings-section__header--compact">
+          <h2 id="application-info-title">应用信息</h2>
+        </div>
+        <dl className="application-info">
+          <div>
+            <dt>应用名称</dt>
+            <dd>Visual Learn</dd>
+          </div>
+          <div>
+            <dt>版本</dt>
+            <dd>{packageInfo.version}</dd>
+          </div>
+          <div>
+            <dt>技术栈</dt>
+            <dd>Electron + React + TypeScript</dd>
+          </div>
+        </dl>
+      </section>
     </div>
   )
 }

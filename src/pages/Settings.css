@@ -1,25 +1,101 @@
 .settings-container {
-  padding: 0;
+  display: grid;
+  gap: 16px;
   min-height: 0;
 }
 
-.settings-card {
-  border-radius: 8px;
-  margin-bottom: 12px;
+/* 设置分区：抽屉已提供外层边界，内部只使用轻量分区，不再嵌套 Card。 */
+.settings-section {
+  padding: 16px;
+  border: 1px solid rgb(var(--vl-border));
+  border-radius: 6px;
+  background: rgb(var(--vl-panel));
 }
 
-.settings-card .ant-card-head-title {
+.settings-section__header {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgb(var(--vl-border));
+}
+
+.settings-section__header--compact {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+}
+
+.settings-section__header h2 {
+  margin: 0;
+  color: rgb(var(--vl-text));
   font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.settings-section__header p {
+  margin: 8px 0 0;
+  color: rgb(var(--vl-text-muted));
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 路径字段：标签到控件 8px，字段之间 16px，与项目 UI 间距梯度一致。 */
+.settings-field-list {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-field label {
+  display: block;
+  margin-bottom: 8px;
+  color: rgb(var(--vl-text));
+  font-size: 12px;
   font-weight: 500;
 }
 
-/* 响应式适配：小屏减小内边距 */
-@media (max-width: 768px) {
-  .settings-container {
-    padding: 0;
-  }
+.settings-path-control.ant-space-compact {
+  display: flex;
+  width: 100%;
+}
 
-  .settings-card {
-    margin-bottom: 12px;
-  }
+.settings-path-control .ant-input {
+  min-width: 0;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  font-size: 12px;
+}
+
+.settings-path-control .ant-btn {
+  flex: 0 0 auto;
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.application-info {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.application-info > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.application-info dt {
+  color: rgb(var(--vl-text-muted));
+  font-size: 12px;
+}
+
+.application-info dd {
+  margin: 0;
+  color: rgb(var(--vl-text));
+  font-size: 12px;
 }

@@ -2,7 +2,7 @@
 
 Visual Learn 是一个 Electron 桌面应用，用于扫描本地学习笔记目录、阅读 Markdown 小册、追踪完成进度，并维护文章标注与总结。
 
-官网文档框架：<https://visual-learn-docs.netlify.app>
+产品介绍：<https://visual-worktree-docs.netlify.app/products/?product=visual-learn>
 
 ## 功能
 
